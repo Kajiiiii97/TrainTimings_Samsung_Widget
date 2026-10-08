@@ -43,6 +43,10 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+    lint {
+        // USE_EXACT_ALARM is fine here: the app is sideloaded, not published on Play.
+        disable += "ExactAlarm"
+    }
     testOptions {
         unitTests.isReturnDefaultValues = true
     }

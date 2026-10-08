@@ -17,7 +17,7 @@ class RefreshWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params
         // Widgets sharing a stop share one request.
         for ((stopId, entries) in configured.groupBy { it.second.stopId }) {
             val filtered = entries.any { it.second.selections.isNotEmpty() }
-            val result = runCatching { VvsApi.departures(stopId, if (filtered) 80 else 30) }
+            val result = runCatching { VvsApi.departures(stopId, if (filtered) 80 else 60) }
             for ((id, config) in entries) {
                 val cache = result.fold(
                     onSuccess = { all -> DepartureCache(Instant.now(), all.filter(config::matches), null) },
@@ -39,6 +39,7 @@ class RefreshWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params
             .filter { it.isAfter(now) }
             .minOrNull()
         Scheduler.scheduleNext(ctx, next)
+        MinuteTicker.schedule(ctx)
         return Result.success()
     }
 }

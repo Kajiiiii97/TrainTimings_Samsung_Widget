@@ -198,6 +198,7 @@ class ConfigActivity : Activity() {
             WidgetRenderer.render(this, AppWidgetManager.getInstance(this), widgetId)
             Scheduler.ensurePeriodic(this)
             Scheduler.refreshNow(this)
+            MinuteTicker.schedule(this)
             setResult(RESULT_OK, resultIntent())
             finish()
         } else {

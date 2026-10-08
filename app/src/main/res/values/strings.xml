@@ -12,7 +12,10 @@
     <string name="widget_updated">Updated %1$s</string>
     <string name="widget_offline">Offline · data from %1$s</string>
     <string name="platform_short">Pl. %1$s</string>
-    <string name="cancelled_short">cancelled</string>
+    <string name="now">now</string>
+    <string name="min_unit">min</string>
+    <string name="minutes_short">%1$d min</string>
+    <string name="then_in">then %1$s</string>
     <string name="refresh">Refresh</string>
     <string name="settings">Change stop or lines</string>
 

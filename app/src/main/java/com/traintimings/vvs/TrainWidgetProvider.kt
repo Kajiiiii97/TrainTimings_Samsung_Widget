@@ -14,6 +14,7 @@ class TrainWidgetProvider : AppWidgetProvider() {
         ids.forEach { WidgetRenderer.render(ctx, mgr, it) }
         Scheduler.ensurePeriodic(ctx)
         Scheduler.refreshNow(ctx)
+        MinuteTicker.schedule(ctx)
     }
 
     override fun onAppWidgetOptionsChanged(ctx: Context, mgr: AppWidgetManager, id: Int, options: Bundle) {
@@ -27,6 +28,7 @@ class TrainWidgetProvider : AppWidgetProvider() {
 
     override fun onDisabled(ctx: Context) {
         Scheduler.cancelAll(ctx)
+        MinuteTicker.cancel(ctx)
     }
 
     override fun onReceive(ctx: Context, intent: Intent) {
@@ -38,6 +40,13 @@ class TrainWidgetProvider : AppWidgetProvider() {
                 }
                 Scheduler.refreshNow(ctx)
             }
+            ACTION_TICK -> {
+                val ids = allIds(ctx)
+                if (ids.isEmpty()) return
+                val mgr = AppWidgetManager.getInstance(ctx)
+                ids.forEach { WidgetRenderer.render(ctx, mgr, it) }
+                MinuteTicker.schedule(ctx)
+            }
             ACTION_PINNED -> {
                 // Widget added from inside the app via requestPinAppWidget: apply the config chosen there.
                 val id = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
@@ -47,6 +56,7 @@ class TrainWidgetProvider : AppWidgetProvider() {
                     WidgetRenderer.render(ctx, AppWidgetManager.getInstance(ctx), id)
                     Scheduler.ensurePeriodic(ctx)
                     Scheduler.refreshNow(ctx)
+                    MinuteTicker.schedule(ctx)
                 }
             }
             else -> super.onReceive(ctx, intent)
@@ -55,6 +65,7 @@ class TrainWidgetProvider : AppWidgetProvider() {
 
     companion object {
         const val ACTION_REFRESH = "com.traintimings.vvs.REFRESH"
+        const val ACTION_TICK = "com.traintimings.vvs.TICK"
         const val ACTION_PINNED = "com.traintimings.vvs.PINNED"
         const val EXTRA_CONFIG = "config"
 

@@ -5,10 +5,7 @@ import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.text.SpannableString
-import android.text.Spanned
 import android.text.format.DateFormat
-import android.text.style.StrikethroughSpan
 import android.view.View
 import android.widget.RemoteViews
 import java.time.Instant
@@ -41,13 +38,11 @@ object WidgetRenderer {
 
         val fmt = formatter(ctx)
         val cache = WidgetStore.cache(ctx, id)
-        val cutoff = Instant.now().minusSeconds(30)
-        val upcoming = cache?.departures.orEmpty()
-            .filter { it.time.isAfter(cutoff) && config.matches(it) }
-            .sortedBy { it.time }
+        val now = Instant.now()
+        val lines = Countdown.group(cache?.departures.orEmpty().filter(config::matches), now)
             .take(rowCount(mgr, id))
 
-        if (upcoming.isEmpty()) {
+        if (lines.isEmpty()) {
             showMessage(
                 views,
                 when {
@@ -58,7 +53,7 @@ object WidgetRenderer {
             )
         } else {
             views.setViewVisibility(R.id.empty_text, View.GONE)
-            upcoming.forEach { views.addView(R.id.rows, row(ctx, it, fmt)) }
+            lines.forEach { views.addView(R.id.rows, row(ctx, it, now, fmt)) }
         }
 
         val fetchedAt = cache?.fetchedAt
@@ -71,7 +66,8 @@ object WidgetRenderer {
         mgr.updateAppWidget(id, views)
     }
 
-    private fun row(ctx: Context, d: Departure, fmt: DateTimeFormatter): RemoteViews {
+    private fun row(ctx: Context, line: UpcomingLine, now: Instant, fmt: DateTimeFormatter): RemoteViews {
+        val d = line.next
         val r = RemoteViews(ctx.packageName, R.layout.widget_row)
         r.setTextViewText(R.id.badge_text, d.line)
         r.setInt(R.id.badge_bg, "setColorFilter", LineColors.background(d.line, d.productClass))
@@ -84,23 +80,43 @@ object WidgetRenderer {
             r.setViewVisibility(R.id.platform, View.GONE)
         }
 
-        val time = fmt.format(d.time)
-        if (d.cancelled) {
-            val struck = SpannableString(fmt.format(d.planned))
-            struck.setSpan(StrikethroughSpan(), 0, struck.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-            r.setTextViewText(R.id.time, struck)
-            r.setTextViewText(R.id.delay, ctx.getString(R.string.cancelled_short))
-            r.setViewVisibility(R.id.delay, View.VISIBLE)
-        } else {
-            r.setTextViewText(R.id.time, time)
-            if (d.delayMinutes > 0) {
-                r.setTextViewText(R.id.delay, "+${d.delayMinutes}")
-                r.setViewVisibility(R.id.delay, View.VISIBLE)
-            } else {
-                r.setViewVisibility(R.id.delay, View.GONE)
+        // Big countdown for the next train.
+        val minutes = Countdown.minutesUntil(d.time, now)
+        when {
+            minutes == 0L -> {
+                r.setTextViewText(R.id.countdown, ctx.getString(R.string.now))
+                r.setViewVisibility(R.id.countdown_unit, View.GONE)
+            }
+            minutes >= 60 -> {
+                r.setTextViewText(R.id.countdown, fmt.format(d.time))
+                r.setViewVisibility(R.id.countdown_unit, View.GONE)
+            }
+            else -> {
+                r.setTextViewText(R.id.countdown, minutes.toString())
+                r.setViewVisibility(R.id.countdown_unit, View.VISIBLE)
             }
         }
+        if (d.delayMinutes > 0) {
+            r.setTextViewText(R.id.delay, "+${d.delayMinutes}")
+            r.setViewVisibility(R.id.delay, View.VISIBLE)
+        } else {
+            r.setViewVisibility(R.id.delay, View.GONE)
+        }
+
+        // Smaller "then 14 min" for the train after.
+        val after = line.after
+        if (after != null) {
+            r.setTextViewText(R.id.then, ctx.getString(R.string.then_in, shortWait(ctx, after, now, fmt)))
+            r.setViewVisibility(R.id.then, View.VISIBLE)
+        } else {
+            r.setViewVisibility(R.id.then, View.GONE)
+        }
         return r
+    }
+
+    private fun shortWait(ctx: Context, d: Departure, now: Instant, fmt: DateTimeFormatter): String {
+        val minutes = Countdown.minutesUntil(d.time, now)
+        return if (minutes >= 60) fmt.format(d.time) else ctx.getString(R.string.minutes_short, minutes)
     }
 
     private fun showMessage(views: RemoteViews, text: String) {
@@ -112,7 +128,7 @@ object WidgetRenderer {
     private fun rowCount(mgr: AppWidgetManager, id: Int): Int {
         val height = mgr.getAppWidgetOptions(id).getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 0)
         if (height <= 0) return 4
-        return ((height - 70) / 27).coerceIn(1, 8)
+        return ((height - 70) / 44).coerceIn(1, 6)
     }
 
     private fun formatter(ctx: Context): DateTimeFormatter =
