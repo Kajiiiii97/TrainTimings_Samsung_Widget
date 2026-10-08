@@ -1,0 +1,14 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <!-- Simple front view of a train -->
+    <path android:fillColor="#1A1C1E"
+        android:pathData="M40,30h28a8,8 0,0 1,8 8v26a8,8 0,0 1,-8 8H40a8,8 0,0 1,-8 -8V38a8,8 0,0 1,8 -8z" />
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M39,38h30v14H39z" />
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M42,62m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M66,62m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
+    <path android:fillColor="#1A1C1E"
+        android:pathData="M40,72l-6,8h5l5,-8zM68,72l6,8h-5l-5,-8z" />
+</vector>

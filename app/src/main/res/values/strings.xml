@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Train Timings</string>
+    <string name="widget_label">VVS departures</string>
+    <string name="widget_description">Next departures for the VVS lines and directions you pick</string>
+
+    <string name="widget_setup">Tap to pick a stop and lines</string>
+    <string name="widget_loading">Loading…</string>
+    <string name="widget_refreshing">Refreshing…</string>
+    <string name="widget_error">Couldn\'t reach VVS. Tap to retry.</string>
+    <string name="widget_no_departures">No upcoming departures</string>
+    <string name="widget_updated">Updated %1$s</string>
+    <string name="widget_offline">Offline · data from %1$s</string>
+    <string name="platform_short">Pl. %1$s</string>
+    <string name="cancelled_short">cancelled</string>
+    <string name="refresh">Refresh</string>
+    <string name="settings">Change stop or lines</string>
+
+    <string name="pick_stop">Pick a stop</string>
+    <string name="search_hint">Stop name or ID</string>
+    <string name="search_hint_long">Search a VVS stop, e.g. \"Hauptbahnhof\" or \"Vaihingen\". A numeric stop ID like 5002260 works too.</string>
+    <string name="search">Search</string>
+    <string name="searching">Searching…</string>
+    <string name="no_stops">No stops found</string>
+    <string name="stop_id_entry">Stop ID %1$s</string>
+    <string name="loading_lines">Loading lines at this stop…</string>
+    <string name="pick_lines">Tick the lines and directions you want. Leave everything unticked to show all departures.</string>
+    <string name="no_lines">No departures found right now. Saving will show all lines once they run.</string>
+    <string name="network_error">Couldn\'t reach VVS: %1$s</string>
+    <string name="back">Back</string>
+    <string name="save">Save</string>
+    <string name="add_to_home">Add widget to home screen</string>
+    <string name="pin_unsupported">Your launcher can\'t add widgets from here. Long-press the home screen → Widgets → Train Timings.</string>
+</resources>

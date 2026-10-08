@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="widget_bg">#F7F8FA</color>
+    <color name="widget_text">#1A1C1E</color>
+    <color name="widget_text_secondary">#5E6570</color>
+    <color name="widget_delay">#C62828</color>
+    <color name="launcher_bg">#FFD800</color>
+</resources>
