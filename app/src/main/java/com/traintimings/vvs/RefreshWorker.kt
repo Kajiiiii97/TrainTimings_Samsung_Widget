@@ -11,7 +11,7 @@ class RefreshWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params
     override fun doWork(): Result {
         val ctx = applicationContext
         val mgr = AppWidgetManager.getInstance(ctx)
-        val ids = TrainWidgetProvider.allIds(ctx)
+        val ids = TrainWidgetProvider.allIds(ctx).toList()
         val configured = ids.mapNotNull { id -> WidgetStore.config(ctx, id)?.let { id to it } }
 
         // Widgets sharing a stop share one request.
