@@ -132,9 +132,19 @@ class VvsParserTest {
             stops = emptyList(),
             highlight = mapOf(TileKey("a", u12) to 3, TileKey("b", null) to 7),
         )
-        assertEquals(3, config.highlightFor("a", u12))
-        assertEquals(7, config.highlightFor("b", u12))
-        assertEquals(WidgetConfig.DEFAULT_HIGHLIGHT, config.highlightFor("c", u12))
+        fun at(stop: String) = Departure(
+            line = "U12",
+            destination = "Dürrlewang",
+            productClass = 3,
+            planned = Instant.EPOCH,
+            estimated = null,
+            cancelled = false,
+            platform = "",
+            stopId = stop,
+        )
+        assertEquals(3, config.highlightFor(at("a")))
+        assertEquals(7, config.highlightFor(at("b")))
+        assertEquals(WidgetConfig.DEFAULT_HIGHLIGHT, config.highlightFor(at("c")))
     }
 
     @Test
