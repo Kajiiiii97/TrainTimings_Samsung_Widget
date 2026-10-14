@@ -97,7 +97,6 @@ data class StopSelection(val stopId: String, val stopName: String, val lines: Li
 
     fun toJson(): JSONObject = JSONObject()
         .put("stopId", stopId)
-        .put("dir", direction)
         .put("stopName", stopName)
         .put("selections", JSONArray().apply { lines.forEach { put(it.toJson()) } })
 
