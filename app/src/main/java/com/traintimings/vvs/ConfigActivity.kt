@@ -1,6 +1,7 @@
 package com.traintimings.vvs
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
@@ -23,24 +24,29 @@ import java.time.Instant
 import java.util.concurrent.Executors
 
 /**
- * Step 1: search for a VVS stop. Step 2: tick the lines and directions to show.
+ * Builds a widget from one or more stops:
+ * the overview lists the chosen stops, "Add stop" searches for one, and ticking its lines adds it.
  * Opened by the launcher when a widget is added, from the widget's gear icon, or from the app drawer.
  */
 class ConfigActivity : Activity() {
 
-    private enum class Mode { STOPS, LINES }
+    private enum class Mode { OVERVIEW, STOPS, LINES }
 
     private val io = Executors.newSingleThreadExecutor()
     private val main = Handler(Looper.getMainLooper())
 
     private var widgetId = AppWidgetManager.INVALID_APPWIDGET_ID
-    private var mode = Mode.STOPS
-    private var stops: List<Stop> = emptyList()
-    private var selectedStop: Stop? = null
-    private var options: List<LineDirection> = emptyList()
-    private var fetched: DepartureCache? = null
-    private var preselected: Set<LineDirection> = emptySet()
+    private var mode = Mode.OVERVIEW
     private var requestToken = 0
+
+    /** The stops chosen so far, in the order they were added. */
+    private val picked = mutableListOf<StopSelection>()
+    /** Departures downloaded while picking lines, reused to fill the widget straight away. */
+    private val fetched = mutableMapOf<String, DepartureCache>()
+
+    private var searchResults: List<Stop> = emptyList()
+    private var currentStop: Stop? = null
+    private var options: List<LineDirection> = emptyList()
 
     private lateinit var searchRow: View
     private lateinit var query: EditText
@@ -49,6 +55,7 @@ class ConfigActivity : Activity() {
     private lateinit var list: ListView
     private lateinit var save: Button
     private lateinit var back: Button
+    private lateinit var addStop: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,6 +71,7 @@ class ConfigActivity : Activity() {
         list = findViewById(R.id.list)
         save = findViewById(R.id.save)
         back = findViewById(R.id.back)
+        addStop = findViewById(R.id.add_stop)
 
         findViewById<Button>(R.id.search).setOnClickListener { search() }
         query.setOnEditorActionListener { _, actionId, event ->
@@ -71,19 +79,22 @@ class ConfigActivity : Activity() {
             if (actionId == EditorInfo.IME_ACTION_SEARCH || enter) { search(); true } else false
         }
         list.setOnItemClickListener { _, _, position, _ ->
-            if (mode == Mode.STOPS) stops.getOrNull(position)?.let { pickStop(it) }
+            when (mode) {
+                Mode.OVERVIEW -> picked.getOrNull(position)?.let { pickStop(Stop(it.stopId, it.stopName)) }
+                Mode.STOPS -> searchResults.getOrNull(position)?.let { pickStop(it) }
+                Mode.LINES -> Unit
+            }
         }
-        save.setOnClickListener { save() }
-        back.setOnClickListener { showStops() }
-        save.setText(if (hasWidget()) R.string.save else R.string.add_to_home)
+        list.setOnItemLongClickListener { _, _, position, _ ->
+            if (mode == Mode.OVERVIEW) picked.getOrNull(position)?.let { confirmRemove(it) }
+            mode == Mode.OVERVIEW
+        }
+        save.setOnClickListener { if (mode == Mode.LINES) commitLines() else save() }
+        back.setOnClickListener { goBack() }
+        addStop.setOnClickListener { showSearch() }
 
-        val existing = if (hasWidget()) WidgetStore.config(this, widgetId) else null
-        if (existing != null) {
-            preselected = existing.selections.toSet()
-            pickStop(Stop(existing.stopId, existing.stopName))
-        } else {
-            showStops()
-        }
+        if (hasWidget()) WidgetStore.config(this, widgetId)?.let { picked += it.stops }
+        if (picked.isEmpty()) showSearch() else showOverview()
     }
 
     override fun onDestroy() {
@@ -93,23 +104,50 @@ class ConfigActivity : Activity() {
 
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
-        if (mode == Mode.LINES) showStops() else super.onBackPressed()
+        if (mode == Mode.OVERVIEW || (mode == Mode.STOPS && picked.isEmpty())) super.onBackPressed() else goBack()
+    }
+
+    private fun goBack() {
+        when (mode) {
+            Mode.LINES -> showSearch()
+            Mode.STOPS -> if (picked.isEmpty()) finish() else showOverview()
+            Mode.OVERVIEW -> finish()
+        }
     }
 
     private fun hasWidget() = widgetId != AppWidgetManager.INVALID_APPWIDGET_ID
 
     private fun resultIntent() = Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId)
 
-    private fun showStops() {
+    private fun showOverview() {
+        mode = Mode.OVERVIEW
+        requestToken++
+        searchRow.visibility = View.GONE
+        back.visibility = View.GONE
+        addStop.visibility = View.VISIBLE
+        save.visibility = if (picked.isEmpty()) View.GONE else View.VISIBLE
+        save.setText(if (hasWidget()) R.string.save else R.string.add_to_home)
+        title.setText(R.string.your_stops)
+        status.setText(R.string.your_stops_hint)
+        list.choiceMode = ListView.CHOICE_MODE_NONE
+        val rows = picked.map { sel ->
+            val lines = if (sel.lines.isEmpty()) getString(R.string.all_lines) else sel.lines.joinToString("\n") { it.label }
+            "${sel.stopName}\n$lines"
+        }
+        list.adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, rows)
+    }
+
+    private fun showSearch() {
         mode = Mode.STOPS
         requestToken++
         searchRow.visibility = View.VISIBLE
-        back.visibility = View.GONE
+        back.visibility = if (picked.isEmpty()) View.GONE else View.VISIBLE
+        addStop.visibility = View.GONE
         save.visibility = View.GONE
         title.setText(R.string.pick_stop)
-        status.text = if (stops.isEmpty()) getString(R.string.search_hint_long) else ""
+        status.text = if (searchResults.isEmpty()) getString(R.string.search_hint_long) else ""
         list.choiceMode = ListView.CHOICE_MODE_NONE
-        list.adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, stops.map { it.name })
+        list.adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, searchResults.map { it.name })
     }
 
     private fun search() {
@@ -129,8 +167,8 @@ class ConfigActivity : Activity() {
             main.post {
                 if (isFinishing || token != requestToken) return@post
                 result.onSuccess {
-                    stops = it
-                    showStops()
+                    searchResults = it
+                    showSearch()
                     if (it.isEmpty()) status.setText(R.string.no_stops)
                 }.onFailure {
                     status.text = getString(R.string.network_error, it.message ?: "")
@@ -140,12 +178,13 @@ class ConfigActivity : Activity() {
     }
 
     private fun pickStop(stop: Stop) {
-        selectedStop = stop
-        fetched = null
+        currentStop = stop
         mode = Mode.LINES
         searchRow.visibility = View.GONE
         back.visibility = View.VISIBLE
+        addStop.visibility = View.GONE
         save.visibility = View.GONE
+        save.setText(R.string.done)
         title.text = stop.name
         status.setText(R.string.loading_lines)
         list.adapter = null
@@ -156,18 +195,17 @@ class ConfigActivity : Activity() {
                 if (isFinishing || token != requestToken) return@post
                 result.onSuccess { board ->
                     if (stop.name == getString(R.string.stop_id_entry, stop.id) && board.stopName != null) {
-                        selectedStop = Stop(stop.id, board.stopName)
+                        currentStop = Stop(stop.id, board.stopName)
                         title.text = board.stopName
                     }
-                    fetched = DepartureCache(Instant.now(), board.departures, null)
-                    showLines(board.departures)
-                }
-                    .onFailure { status.text = getString(R.string.network_error, it.message ?: "") }
+                    fetched[stop.id] = DepartureCache(Instant.now(), board.departures, null)
+                    showLines(board.departures, picked.find { it.stopId == stop.id }?.lines.orEmpty().toSet())
+                }.onFailure { status.text = getString(R.string.network_error, it.message ?: "") }
             }
         }
     }
 
-    private fun showLines(departures: List<Departure>) {
+    private fun showLines(departures: List<Departure>, preselected: Set<LineDirection>) {
         val seen = LinkedHashMap<LineDirection, Int>()
         departures.forEach { seen.putIfAbsent(it.lineDirection, it.productClass) }
         // Keep previously saved choices even if they don't run right now (e.g. late at night).
@@ -184,14 +222,37 @@ class ConfigActivity : Activity() {
         save.visibility = View.VISIBLE
     }
 
-    private fun save() {
-        val stop = selectedStop ?: return
+    /** "Done" on the lines screen: add the stop, or update it if it was already picked. */
+    private fun commitLines() {
+        val stop = currentStop ?: return
         val checked = list.checkedItemPositions
-        val selections = options.filterIndexed { i, _ -> checked?.get(i) == true }
-        val config = WidgetConfig(stop.id, stop.name, selections)
+        val lines = options.filterIndexed { i, _ -> checked?.get(i) == true }
+        val selection = StopSelection(stop.id, stop.name, lines)
+        val index = picked.indexOfFirst { it.stopId == stop.id }
+        if (index >= 0) picked[index] = selection else picked += selection
+        query.text.clear()
+        searchResults = emptyList()
+        showOverview()
+    }
+
+    private fun confirmRemove(selection: StopSelection) {
+        AlertDialog.Builder(this)
+            .setMessage(getString(R.string.remove_stop, selection.stopName))
+            .setPositiveButton(R.string.remove) { _, _ ->
+                picked.remove(selection)
+                showOverview()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun save() {
+        if (picked.isEmpty()) return
+        val config = WidgetConfig(picked.toList())
+        fetched.forEach { (stopId, cache) -> WidgetStore.saveStopCache(this, stopId, cache) }
 
         if (hasWidget()) {
-            WidgetStore.saveConfig(this, widgetId, config, fetched)
+            WidgetStore.saveConfig(this, widgetId, config)
             WidgetRenderer.render(this, AppWidgetManager.getInstance(this), widgetId)
             Scheduler.ensurePeriodic(this)
             Scheduler.refreshNow(this)

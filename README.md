@@ -6,15 +6,14 @@ for the lines and directions you choose. It uses the same `www3.vvs.de/mngvvs` E
 JSON so stops can be searched by name.
 
 ```
-Stuttgart Hauptbahnhof                    ⟳ ⚙
 ┌──────────────────────┐ ┌──────────────────────┐
 │ S1  Herrenberg       │ │ U12 Dürrlewang       │  ← solid pink when it's
-│ 4 min    then 19 min │ │ now      then 10 min │    leaving now
+│ 4 min      then 19m  │ │ now        then 10m  │    leaving now
 ├──────────────────────┤ ├──────────────────────┤
-│ U14 Vaihingen        │ │ U14 Mühlhausen       │
-│ 7 min +2 then 17 min │ │ 12 min   then 22 min │
+│ U14 Vaihingen        │ │ 56  Münster          │
+│ 7 min +2   then 17m  │ │ 12 min     then 22m  │
 └──────────────────────┘ └──────────────────────┘
-                                   Updated 13:58
+                              Updated 13:58 ⟳ ⚙
 ```
 
 ## Install
@@ -27,11 +26,13 @@ Stuttgart Hauptbahnhof                    ⟳ ⚙
 
 ## Set up
 
-1. Search for a stop by name (`Pragsattel`, `Hauptbahnhof`) or type a numeric stop ID such as `5002260`.
-2. Tick the line + direction combinations you care about, e.g. `U14 → Vaihingen`.
-   Lines that short-turn show up as separate directions, so tick each one you'd take.
-   Leave everything unticked to show all departures at the stop.
-3. Save. Tap the gear on the widget any time to change it. Add several widgets for different stops.
+1. Tap **+ Add stop** and search by name (`Pragsattel`, `Hauptbahnhof`) or type a numeric stop ID such
+   as `5002260`.
+2. Tick the line + direction combinations you care about there, e.g. `U14 → Vaihingen`, and tap
+   **Done**. Leave everything unticked to show every line at that stop.
+3. Add more stops the same way. One widget can mix lines from any number of stops, like the LCD
+   display did. Tap a stop to change its lines, long-press to remove it.
+4. Save. Tap the gear on the widget any time to change it.
 
 ## How it behaves
 
@@ -45,7 +46,7 @@ Stuttgart Hauptbahnhof                    ⟳ ⚙
 - Refreshes every 15 minutes, again right after each train leaves, and whenever you tap it.
 - Offline it keeps the last data and drops trains that have already left.
 - Style: playful geometric, with chunky outlines, solid offset shadows that cycle through the palette,
-  a tilted sticker for the stop name, pill badges and outline circle/diamond shapes. Colours come from
+  pill badges and outline circle/diamond shapes. Colours come from
   the Soft Blush / Powder Blush / Soft Blossom / Cotton Candy / Petal Rouge / Sweet Salmon palette plus
   a near-black plum for outlines and text. All colours are roles in `res/values/colors.xml`, so a new
   theme is one file.

@@ -4,7 +4,7 @@
     <string name="widget_label">VVS departures</string>
     <string name="widget_description">Next departures for the VVS lines and directions you pick</string>
 
-    <string name="widget_setup">Tap to pick a stop and lines</string>
+    <string name="widget_setup">Tap to pick your stops and lines</string>
     <string name="widget_loading">Loading…</string>
     <string name="widget_refreshing">Refreshing…</string>
     <string name="widget_error">Couldn\'t reach VVS. Tap to retry.</string>
@@ -31,6 +31,13 @@
     <string name="network_error">Couldn\'t reach VVS: %1$s</string>
     <string name="back">Back</string>
     <string name="save">Save</string>
+    <string name="done">Done</string>
+    <string name="add_stop">+ Add stop</string>
+    <string name="your_stops">Your stops</string>
+    <string name="your_stops_hint">Each tile on the widget is one line and direction, from any of these stops. Up to 6 show at once, soonest first. Tap a stop to change its lines, long-press to remove it.</string>
+    <string name="all_lines">All lines</string>
+    <string name="remove_stop">Remove %1$s?</string>
+    <string name="remove">Remove</string>
     <string name="add_to_home">Add widget to home screen</string>
     <string name="pin_unsupported">Your launcher can\'t add widgets from here. Long-press the home screen → Widgets → Train Timings.</string>
 </resources>

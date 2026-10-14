@@ -9,7 +9,7 @@ class CountdownTest {
 
     private val now = Instant.parse("2026-10-08T12:00:00Z")
 
-    private fun dep(line: String, dest: String, minutes: Long, cancelled: Boolean = false) = Departure(
+    private fun dep(line: String, dest: String, minutes: Long, cancelled: Boolean = false, stop: String = "") = Departure(
         line = line,
         destination = dest,
         productClass = 3,
@@ -17,6 +17,7 @@ class CountdownTest {
         estimated = null,
         cancelled = cancelled,
         platform = "",
+        stopId = stop,
     )
 
     @Test
@@ -82,5 +83,21 @@ class CountdownTest {
             listOf("S1 Herrenberg", "S1 Kirchheim", "U12 Dürrlewang", "U14 Mühlhausen", "U14 Vaihingen", "56 Münster"),
             tiles.map { "${it.next.line} ${it.next.destination}" },
         )
+    }
+
+    @Test
+    fun sameLineAtTwoStopsGetsTwoTiles() {
+        val tiles = Countdown.tiles(
+            listOf(
+                dep("U14", "Vaihingen", 3, stop = "pragsattel"),
+                dep("U14", "Vaihingen", 8, stop = "loewentor"),
+                dep("U14", "Vaihingen", 13, stop = "pragsattel"),
+            ),
+            now,
+            limit = 6,
+        )
+        assertEquals(2, tiles.size)
+        assertEquals(setOf("pragsattel", "loewentor"), tiles.map { it.next.stopId }.toSet())
+        assertEquals(13, Countdown.minutesUntil(tiles.first { it.next.stopId == "pragsattel" }.after!!.time, now))
     }
 }

@@ -24,8 +24,7 @@ object WidgetRenderer {
         views.setOnClickPendingIntent(R.id.btn_settings, configIntent(ctx, id))
 
         val config = WidgetStore.config(ctx, id)
-        if (config == null) {
-            views.setTextViewText(R.id.stop_name, ctx.getString(R.string.app_name))
+        if (config == null || config.stops.isEmpty()) {
             views.setViewVisibility(R.id.btn_refresh, View.GONE)
             showMessage(views, ctx.getString(R.string.widget_setup))
             views.setTextViewText(R.id.footer, "")
@@ -38,24 +37,24 @@ object WidgetRenderer {
         views.setOnClickPendingIntent(R.id.widget_root, refresh)
         views.setOnClickPendingIntent(R.id.btn_refresh, refresh)
         views.setViewVisibility(R.id.btn_refresh, View.VISIBLE)
-        views.setTextViewText(R.id.stop_name, config.stopName)
 
         val fmt = formatter(ctx)
-        val cache = WidgetStore.cache(ctx, id)
         val now = Instant.now()
+        val caches = config.stops.map { it to WidgetStore.stopCache(ctx, it.stopId) }
+        val departures = caches.flatMap { (sel, cache) -> cache?.departures.orEmpty().filter(sel::matches) }
         val (columns, maxRows) = gridSize(mgr, id)
-        val tiles = Countdown.tiles(
-            cache?.departures.orEmpty().filter(config::matches),
-            now,
-            minOf(MAX_TILES, columns * maxRows),
-        )
+        val tiles = Countdown.tiles(departures, now, minOf(MAX_TILES, columns * maxRows))
+
+        val loaded = caches.mapNotNull { it.second }
+        val fetchedAt = loaded.mapNotNull { it.fetchedAt }.minOrNull()
+        val anyError = loaded.any { it.error != null }
 
         if (tiles.isEmpty()) {
             showMessage(
                 views,
                 when {
-                    cache == null -> ctx.getString(R.string.widget_loading)
-                    cache.error != null && cache.fetchedAt == null -> ctx.getString(R.string.widget_error)
+                    loaded.isEmpty() -> ctx.getString(R.string.widget_loading)
+                    anyError && fetchedAt == null -> ctx.getString(R.string.widget_error)
                     else -> ctx.getString(R.string.widget_no_departures)
                 },
             )
@@ -74,10 +73,9 @@ object WidgetRenderer {
             }
         }
 
-        val fetchedAt = cache?.fetchedAt
         val footer = status ?: when {
             fetchedAt == null -> ""
-            cache?.error != null -> ctx.getString(R.string.widget_offline, fmt.format(fetchedAt))
+            anyError -> ctx.getString(R.string.widget_offline, fmt.format(fetchedAt))
             else -> ctx.getString(R.string.widget_updated, fmt.format(fetchedAt))
         }
         views.setTextViewText(R.id.footer, footer)
@@ -153,7 +151,7 @@ object WidgetRenderer {
         val width = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0)
         val height = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 0)
         val columns = if (width >= 400) 3 else 2
-        val rows = if (height <= 0) 3 else ((height - 62) / 60).coerceIn(1, 3)
+        val rows = if (height <= 0) 3 else ((height - 54) / 58).coerceIn(1, 3)
         return columns to rows
     }
 

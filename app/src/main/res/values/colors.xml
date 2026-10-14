@@ -17,7 +17,6 @@
     <color name="widget_shadow">@color/petal_rouge</color>
     <color name="widget_text">@color/ink</color>
     <color name="widget_text_secondary">#7A4A5C</color>
-    <color name="sticker">@color/cotton_candy</color>
     <color name="button_face">#FFFFFF</color>
     <color name="deco_circle">@color/cotton_candy</color>
     <color name="deco_diamond">@color/sweet_salmon</color>

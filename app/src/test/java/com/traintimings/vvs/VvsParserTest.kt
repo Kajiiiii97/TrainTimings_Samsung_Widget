@@ -81,21 +81,37 @@ class VvsParserTest {
     }
 
     @Test
-    fun configFiltersBySelectedLineAndDirection() {
+    fun stopSelectionFiltersByLineAndDirection() {
         val deps = VvsParser.parseDepartures(departuresJson)
-        val config = WidgetConfig("x", "Pragsattel", listOf(LineDirection("U14", "Vaihingen")))
-        assertEquals(listOf("U14"), deps.filter(config::matches).map { it.line })
+        val some = StopSelection("x", "Pragsattel", listOf(LineDirection("U14", "Vaihingen")))
+        assertEquals(listOf("U14"), deps.filter(some::matches).map { it.line })
 
-        val all = WidgetConfig("x", "Pragsattel", emptyList())
+        val all = StopSelection("x", "Pragsattel", emptyList())
         assertEquals(3, deps.count(all::matches))
     }
 
     @Test
     fun configAndCacheRoundTripThroughJson() {
-        val config = WidgetConfig("5002260", "Pragsattel", listOf(LineDirection("U12", "Dürrlewang")))
+        val config = WidgetConfig(
+            listOf(
+                StopSelection("5002260", "Pragsattel", listOf(LineDirection("U12", "Dürrlewang"))),
+                StopSelection("5000275", "Löwentor", emptyList()),
+            ),
+        )
         assertEquals(config, WidgetConfig.fromJson(JSONObject(config.toJson().toString())))
 
         val cache = DepartureCache(Instant.ofEpochMilli(1_000), VvsParser.parseDepartures(departuresJson), null)
         assertEquals(cache, DepartureCache.fromJson(JSONObject(cache.toJson().toString())))
+    }
+
+    @Test
+    fun singleStopConfigsFromOlderVersionsStillLoad() {
+        val legacy = JSONObject(
+            """{"stopId":"5002260","stopName":"Pragsattel","selections":[{"line":"U12","destination":"Dürrlewang"}]}""",
+        )
+        assertEquals(
+            WidgetConfig(listOf(StopSelection("5002260", "Pragsattel", listOf(LineDirection("U12", "Dürrlewang"))))),
+            WidgetConfig.fromJson(legacy),
+        )
     }
 }

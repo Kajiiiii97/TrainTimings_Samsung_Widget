@@ -26,6 +26,8 @@ data class Departure(
     val estimated: Instant?,
     val cancelled: Boolean,
     val platform: String,
+    /** The stop this departure was fetched for, so the same line at two stops stays two tiles. */
+    val stopId: String = "",
 ) {
     val time: Instant get() = estimated ?: planned
     val delayMinutes: Long get() = estimated?.let { Duration.between(planned, it).toMinutes() } ?: 0
@@ -39,6 +41,7 @@ data class Departure(
         .put("estimated", estimated?.toEpochMilli() ?: -1L)
         .put("cancelled", cancelled)
         .put("platform", platform)
+        .put("stopId", stopId)
 
     companion object {
         fun fromJson(o: JSONObject): Departure {
@@ -51,33 +54,50 @@ data class Departure(
                 estimated = if (est >= 0) Instant.ofEpochMilli(est) else null,
                 cancelled = o.optBoolean("cancelled", false),
                 platform = o.optString("platform", ""),
+                stopId = o.optString("stopId", ""),
             )
         }
     }
 }
 
-/** What a single widget instance shows. An empty [selections] list means "every line at this stop". */
-data class WidgetConfig(val stopId: String, val stopName: String, val selections: List<LineDirection>) {
-    fun matches(d: Departure): Boolean = selections.isEmpty() || d.lineDirection in selections
+/** One stop in a widget and the lines picked there. An empty [lines] list means "every line at this stop". */
+data class StopSelection(val stopId: String, val stopName: String, val lines: List<LineDirection>) {
+    fun matches(d: Departure): Boolean = lines.isEmpty() || d.lineDirection in lines
 
     fun toJson(): JSONObject = JSONObject()
         .put("stopId", stopId)
         .put("stopName", stopName)
-        .put("selections", JSONArray().apply { selections.forEach { put(it.toJson()) } })
+        .put("selections", JSONArray().apply { lines.forEach { put(it.toJson()) } })
 
     companion object {
-        fun fromJson(o: JSONObject): WidgetConfig {
+        fun fromJson(o: JSONObject): StopSelection {
             val arr = o.optJSONArray("selections") ?: JSONArray()
-            return WidgetConfig(
+            return StopSelection(
                 stopId = o.getString("stopId"),
                 stopName = o.getString("stopName"),
-                selections = (0 until arr.length()).map { LineDirection.fromJson(arr.getJSONObject(it)) },
+                lines = (0 until arr.length()).map { LineDirection.fromJson(arr.getJSONObject(it)) },
             )
         }
     }
 }
 
-/** Last fetched departures for a widget, kept so the widget can roll forward while offline. */
+/** What a single widget instance shows: lines from one or more stops. */
+data class WidgetConfig(val stops: List<StopSelection>) {
+
+    fun toJson(): JSONObject = JSONObject()
+        .put("stops", JSONArray().apply { stops.forEach { put(it.toJson()) } })
+
+    companion object {
+        fun fromJson(o: JSONObject): WidgetConfig {
+            val arr = o.optJSONArray("stops")
+                // Widgets set up before multi-stop support stored a single stop at the top level.
+                ?: return WidgetConfig(listOf(StopSelection.fromJson(o)))
+            return WidgetConfig((0 until arr.length()).map { StopSelection.fromJson(arr.getJSONObject(it)) })
+        }
+    }
+}
+
+/** Last fetched departures for a stop, kept so widgets can roll forward while offline. */
 data class DepartureCache(val fetchedAt: Instant?, val departures: List<Departure>, val error: String?) {
     fun toJson(): JSONObject = JSONObject()
         .put("fetchedAt", fetchedAt?.toEpochMilli() ?: -1L)

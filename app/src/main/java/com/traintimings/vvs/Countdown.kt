@@ -8,12 +8,12 @@ data class UpcomingLine(val next: Departure, val after: Departure?)
 
 object Countdown {
 
-    /** Groups departures by line + direction, skipping cancelled trips, soonest group first. */
+    /** Groups departures by stop + line + direction, skipping cancelled trips, soonest group first. */
     fun group(departures: List<Departure>, now: Instant): List<UpcomingLine> =
         departures
             .filter { !it.cancelled && !it.time.isBefore(now.minusSeconds(30)) }
             .sortedBy { it.time }
-            .groupBy { it.lineDirection }
+            .groupBy { it.stopId to it.lineDirection }
             .values
             .map { UpcomingLine(it[0], it.getOrNull(1)) }
             .sortedBy { it.next.time }
