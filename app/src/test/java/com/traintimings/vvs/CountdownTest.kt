@@ -9,7 +9,14 @@ class CountdownTest {
 
     private val now = Instant.parse("2026-10-08T12:00:00Z")
 
-    private fun dep(line: String, dest: String, minutes: Long, cancelled: Boolean = false, stop: String = "") = Departure(
+    private fun dep(
+        line: String,
+        dest: String,
+        minutes: Long,
+        cancelled: Boolean = false,
+        stop: String = "",
+        dir: String = "",
+    ) = Departure(
         line = line,
         destination = dest,
         productClass = 3,
@@ -18,6 +25,7 @@ class CountdownTest {
         cancelled = cancelled,
         platform = "",
         stopId = stop,
+        direction = dir,
     )
 
     @Test
@@ -118,5 +126,26 @@ class CountdownTest {
         val tiles = Countdown.tiles(departures, now, limit = 4, order = order)
         // S1 at stop d isn't in the order, so it goes last and falls off the 4-tile limit.
         assertEquals(listOf("U14", "42", "56", "U12"), tiles.map { it.next.line })
+    }
+
+    @Test
+    fun shortTurningTripsInOneDirectionShareATile() {
+        val departures = listOf(
+            dep("54", "Max-Eyth-See", 2, stop = "marabu", dir = "H"),
+            dep("54", "Freiberg", 9, stop = "marabu", dir = "H"),
+            dep("54", "Sommerrain", 4, stop = "marabu", dir = "R"),
+            dep("54", "Marabustraße", 12, stop = "marabu", dir = "R"),
+        )
+        val tiles = Countdown.tiles(departures, now, limit = 6)
+        assertEquals(2, tiles.size)
+        val outbound = tiles.first { it.next.direction == "H" }
+        assertEquals("Max-Eyth-See", outbound.next.destination)
+        assertEquals("Freiberg", outbound.after!!.destination)
+
+        // A pick for the whole direction matches every trip going that way.
+        val pick = LineDirection("54", "Freiberg / Max-Eyth-See", "H")
+        assertEquals(2, departures.count(pick::matches))
+        val highlighted = WidgetConfig(emptyList(), highlight = mapOf(TileKey("marabu", pick) to 5))
+        assertEquals(5, highlighted.highlightFor(departures[1]))
     }
 }

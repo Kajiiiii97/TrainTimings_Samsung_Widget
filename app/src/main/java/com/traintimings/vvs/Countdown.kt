@@ -8,12 +8,15 @@ data class UpcomingLine(val next: Departure, val after: Departure?)
 
 object Countdown {
 
-    /** Groups departures by stop + line + direction, skipping cancelled trips, soonest group first. */
+    /**
+     * Groups departures by stop + line + direction (short-turning trips going the same way share a group),
+     * skipping cancelled trips, soonest group first.
+     */
     fun group(departures: List<Departure>, now: Instant): List<UpcomingLine> =
         departures
             .filter { !it.cancelled && !it.time.isBefore(now.minusSeconds(30)) }
             .sortedBy { it.time }
-            .groupBy { it.stopId to it.lineDirection }
+            .groupBy { it.stopId to it.groupKey }
             .values
             .map { UpcomingLine(it[0], it.getOrNull(1)) }
             .sortedBy { it.next.time }
@@ -36,11 +39,12 @@ object Countdown {
         val groups = group(departures, now)
         if (order.isEmpty()) return groups.take(limit).sortedWith(byLine)
 
-        val position = order.withIndex().associate { (i, key) -> key to i }
-        fun rank(t: UpcomingLine): Int =
-            position[TileKey(t.next.stopId, t.next.lineDirection)]
-                ?: position[TileKey(t.next.stopId, null)]
-                ?: Int.MAX_VALUE
+        fun rank(t: UpcomingLine): Int {
+            val exact = order.indexOfFirst { it.line != null && it.matches(t.next) }
+            if (exact >= 0) return exact
+            val wholeStop = order.indexOfFirst { it.line == null && it.matches(t.next) }
+            return if (wholeStop >= 0) wholeStop else Int.MAX_VALUE
+        }
         return groups.sortedWith(compareBy<UpcomingLine> { rank(it) }.then(byLine)).take(limit)
     }
 

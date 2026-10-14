@@ -62,6 +62,7 @@ class ConfigActivity : Activity() {
     private var searchResults: List<Stop> = emptyList()
     private var currentStop: Stop? = null
     private var options: List<LineDirection> = emptyList()
+    private var lineOptions: List<LineOptions.Option> = emptyList()
 
     private lateinit var searchRow: View
     private lateinit var query: EditText
@@ -319,18 +320,12 @@ class ConfigActivity : Activity() {
     }
 
     private fun showLines(departures: List<Departure>, preselected: Set<LineDirection>) {
-        val seen = LinkedHashMap<LineDirection, Int>()
-        departures.forEach { seen.putIfAbsent(it.lineDirection, it.productClass) }
-        // Keep previously saved choices even if they don't run right now (e.g. late at night).
-        preselected.forEach { seen.putIfAbsent(it, -1) }
-
-        options = seen.entries
-            .sortedWith(LineOrder.comparator({ it.key }, { it.value }))
-            .map { it.key }
+        lineOptions = LineOptions.build(departures, preselected)
+        options = lineOptions.map { it.line }
 
         list.choiceMode = ListView.CHOICE_MODE_MULTIPLE
         list.adapter = ArrayAdapter(this, R.layout.item_check, options.map { it.label })
-        options.forEachIndexed { i, opt -> list.setItemChecked(i, opt in preselected) }
+        lineOptions.forEachIndexed { i, opt -> list.setItemChecked(i, opt.checked) }
         status.setText(if (options.isEmpty()) R.string.no_lines else R.string.pick_lines)
         save.visibility = View.VISIBLE
     }
@@ -339,10 +334,27 @@ class ConfigActivity : Activity() {
     private fun commitLines() {
         val stop = currentStop ?: return
         val checked = list.checkedItemPositions
-        val lines = options.filterIndexed { i, _ -> checked?.get(i) == true }
-        val selection = StopSelection(stop.id, stop.name, lines)
+        val chosen = lineOptions.filterIndexed { i, _ -> checked?.get(i) == true }
+        val selection = StopSelection(stop.id, stop.name, chosen.map { it.line })
         val index = picked.indexOfFirst { it.stopId == stop.id }
         if (index >= 0) picked[index] = selection else picked += selection
+
+        // Older picks may have been merged into one direction row: move their tile position and
+        // highlight time onto the new row instead of losing them.
+        for (option in chosen) {
+            val newKey = TileKey(stop.id, option.line)
+            for (old in option.replaces) {
+                val oldKey = TileKey(stop.id, old)
+                if (oldKey == newKey) continue
+                val at = order.indexOf(oldKey)
+                if (at >= 0) order[at] = newKey
+                highlight.remove(oldKey)?.let { highlight.putIfAbsent(newKey, it) }
+            }
+        }
+        val deduped = order.distinct()
+        order.clear()
+        order += deduped
+
         syncOrder()
         query.text.clear()
         searchResults = emptyList()

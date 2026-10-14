@@ -7,14 +7,38 @@ import java.time.Instant
 
 data class Stop(val id: String, val name: String)
 
-/** A line heading towards a destination, e.g. S1 -> Herrenberg. This is what the user picks. */
-data class LineDirection(val line: String, val destination: String) {
+/**
+ * A line heading one way, e.g. S1 -> Herrenberg. This is what the user picks.
+ *
+ * When VVS tells us the trip direction ([dir] = "H" outbound / "R" return), the pick covers the
+ * whole direction, so short-turning trips (54 to Max-Eyth-See or on to Freiberg) count as one.
+ * Then [destination] lists the destinations seen, e.g. "Freiberg / Max-Eyth-See".
+ * Without a direction code the pick is just that one destination.
+ */
+data class LineDirection(val line: String, val destination: String, val dir: String = "") {
     val label: String get() = "$line  →  $destination"
 
-    fun toJson(): JSONObject = JSONObject().put("line", line).put("destination", destination)
+    val destinations: List<String> get() = destination.split(DEST_SEPARATOR)
+
+    fun matches(d: Departure): Boolean =
+        d.line == line && if (dir.isNotEmpty()) d.direction == dir else d.destination == destination
+
+    /** Whether this pick includes [other], e.g. a whole direction includes one of its destinations. */
+    fun covers(other: LineDirection): Boolean = line == other.line && when {
+        dir.isNotEmpty() && other.dir.isNotEmpty() -> dir == other.dir
+        dir.isNotEmpty() -> other.destination in destinations
+        else -> other.dir.isEmpty() && destination == other.destination
+    }
+
+    fun toJson(): JSONObject = JSONObject().put("line", line).put("destination", destination).apply {
+        if (dir.isNotEmpty()) put("dir", dir)
+    }
 
     companion object {
-        fun fromJson(o: JSONObject) = LineDirection(o.getString("line"), o.getString("destination"))
+        const val DEST_SEPARATOR = " / "
+
+        fun fromJson(o: JSONObject) =
+            LineDirection(o.getString("line"), o.getString("destination"), o.optString("dir", ""))
     }
 }
 
@@ -28,10 +52,15 @@ data class Departure(
     val platform: String,
     /** The stop this departure was fetched for, so the same line at two stops stays two tiles. */
     val stopId: String = "",
+    /** Trip direction from VVS: "H" (outbound) or "R" (return), or empty when unknown. */
+    val direction: String = "",
 ) {
     val time: Instant get() = estimated ?: planned
     val delayMinutes: Long get() = estimated?.let { Duration.between(planned, it).toMinutes() } ?: 0
-    val lineDirection: LineDirection get() = LineDirection(line, destination)
+    val lineDirection: LineDirection get() = LineDirection(line, destination, direction)
+
+    /** Departures with the same key share a tile: same line and direction (or destination when unknown). */
+    val groupKey: String get() = if (direction.isNotEmpty()) "$line|dir:$direction" else "$line|$destination"
 
     fun toJson(): JSONObject = JSONObject()
         .put("line", line)
@@ -42,6 +71,7 @@ data class Departure(
         .put("cancelled", cancelled)
         .put("platform", platform)
         .put("stopId", stopId)
+        .put("dir", direction)
 
     companion object {
         fun fromJson(o: JSONObject): Departure {
@@ -55,6 +85,7 @@ data class Departure(
                 cancelled = o.optBoolean("cancelled", false),
                 platform = o.optString("platform", ""),
                 stopId = o.optString("stopId", ""),
+                direction = o.optString("dir", ""),
             )
         }
     }
@@ -62,10 +93,11 @@ data class Departure(
 
 /** One stop in a widget and the lines picked there. An empty [lines] list means "every line at this stop". */
 data class StopSelection(val stopId: String, val stopName: String, val lines: List<LineDirection>) {
-    fun matches(d: Departure): Boolean = lines.isEmpty() || d.lineDirection in lines
+    fun matches(d: Departure): Boolean = lines.isEmpty() || lines.any { it.matches(d) }
 
     fun toJson(): JSONObject = JSONObject()
         .put("stopId", stopId)
+        .put("dir", direction)
         .put("stopName", stopName)
         .put("selections", JSONArray().apply { lines.forEach { put(it.toJson()) } })
 
@@ -86,13 +118,18 @@ data class StopSelection(val stopId: String, val stopName: String, val lines: Li
  * [line] is null ("all lines").
  */
 data class TileKey(val stopId: String, val line: LineDirection?) {
-    fun encode(): String = "$stopId|${line?.line ?: "*"}|${line?.destination ?: "*"}"
+    fun encode(): String = "$stopId|${line?.line ?: "*"}|${line?.destination ?: "*"}|${line?.dir.orEmpty()}"
+
+    /** Whether this row's tile is the one [d] belongs to. */
+    fun matches(d: Departure): Boolean = stopId == d.stopId && (line == null || line.matches(d))
 
     companion object {
         fun decode(s: String): TileKey? {
             val parts = s.split("|")
-            if (parts.size != 3) return null
-            val line = if (parts[1] == "*" && parts[2] == "*") null else LineDirection(parts[1], parts[2])
+            // Older versions wrote three parts (no direction code).
+            if (parts.size != 3 && parts.size != 4) return null
+            val line = if (parts[1] == "*" && parts[2] == "*") null
+            else LineDirection(parts[1], parts[2], parts.getOrElse(3) { "" })
             return TileKey(parts[0], line)
         }
     }
@@ -110,8 +147,10 @@ data class WidgetConfig(
 ) {
 
     /** Highlight threshold for a tile: its own row's setting, else its stop's "all lines" row, else the default. */
-    fun highlightFor(stopId: String, line: LineDirection): Int =
-        highlight[TileKey(stopId, line)] ?: highlight[TileKey(stopId, null)] ?: DEFAULT_HIGHLIGHT
+    fun highlightFor(d: Departure): Int =
+        highlight.entries.firstOrNull { it.key.line != null && it.key.matches(d) }?.value
+            ?: highlight[TileKey(d.stopId, null)]
+            ?: DEFAULT_HIGHLIGHT
 
     fun toJson(): JSONObject = JSONObject()
         .put("stops", JSONArray().apply { stops.forEach { put(it.toJson()) } })

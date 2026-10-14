@@ -19,7 +19,7 @@ class VvsParserTest {
           "departureTimePlanned": "2026-10-08T12:05:00Z",
           "departureTimeEstimated": "2026-10-08T12:07:00Z",
           "transportation": {
-            "name": "Stadtbahn U14", "disassembledName": "U14", "number": "U14",
+            "id": "vvs:10014: :H:j26", "name": "Stadtbahn U14", "disassembledName": "U14", "number": "U14",
             "product": { "class": 3, "name": "Stadtbahn" },
             "destination": { "name": "Vaihingen" }
           }
@@ -60,6 +60,8 @@ class VvsParserTest {
 
         assertTrue(deps[2].cancelled)
         assertFalse(u14.cancelled)
+        assertEquals("H", u14.direction)
+        assertEquals("", u12.direction)
     }
 
     @Test
@@ -133,5 +135,21 @@ class VvsParserTest {
         assertEquals(3, config.highlightFor("a", u12))
         assertEquals(7, config.highlightFor("b", u12))
         assertEquals(WidgetConfig.DEFAULT_HIGHLIGHT, config.highlightFor("c", u12))
+    }
+
+    @Test
+    fun readsTripDirectionFromLineId() {
+        assertEquals("H", VvsParser.directionOf("vvs:20054: :H:j25"))
+        assertEquals("R", VvsParser.directionOf("vvs:20054: :R:j25"))
+        assertEquals("", VvsParser.directionOf("vvs:20054"))
+        assertEquals("", VvsParser.directionOf(""))
+    }
+
+    @Test
+    fun tileKeysFromOlderVersionsStillDecode() {
+        val legacy = TileKey.decode("5002260|U12|Dürrlewang")
+        assertEquals(TileKey("5002260", LineDirection("U12", "Dürrlewang")), legacy)
+        val key = TileKey("5002260", LineDirection("54", "Freiberg / Max-Eyth-See", "H"))
+        assertEquals(key, TileKey.decode(key.encode()))
     }
 }

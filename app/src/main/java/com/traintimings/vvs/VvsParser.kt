@@ -44,9 +44,17 @@ object VvsParser {
                 estimated = parseTime(str(ev, "departureTimeEstimated")),
                 cancelled = ev.optBoolean("isCancelled", false) || "TRIP_CANCELLED" in status,
                 platform = props?.let { str(it, "platform").ifBlank { str(it, "platformName") } }.orEmpty(),
+                direction = directionOf(str(t, "id")),
             )
         }.sortedBy { it.time }
     }
+
+    /**
+     * EFA line ids look like "vvs:20054: :H:j25", where the 4th part is the trip direction:
+     * H (outbound) or R (return). All trips going the same way share it, whatever their last stop.
+     */
+    fun directionOf(lineId: String): String =
+        lineId.split(":").getOrNull(3)?.trim()?.uppercase()?.takeIf { it == "H" || it == "R" }.orEmpty()
 
     /** The departure monitor echoes the resolved stop under "locations". */
     fun parseStopName(body: String): String? {

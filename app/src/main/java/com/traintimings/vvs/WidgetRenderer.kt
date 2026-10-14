@@ -103,7 +103,7 @@ object WidgetRenderer {
 
         // Big countdown for the next train; the tile turns solid pink once it's within the row's highlight time.
         val minutes = Countdown.minutesUntil(d.time, now)
-        val soon = minutes <= config.highlightFor(d.stopId, d.lineDirection)
+        val soon = minutes <= config.highlightFor(d)
         when {
             minutes == 0L -> {
                 t.setTextViewText(R.id.countdown, ctx.getString(R.string.now))

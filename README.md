@@ -29,7 +29,9 @@ JSON so stops can be searched by name.
 1. Tap **+ Add stop** and search by name (`Pragsattel`, `Hauptbahnhof`) or type a numeric stop ID such
    as `5002260`.
 2. Tick the line + direction combinations you care about there, e.g. `U14 → Vaihingen`, and tap
-   **Done**. Leave everything unticked to show every line at that stop.
+   **Done**. Leave everything unticked to show every line at that stop. Buses that short-turn are
+   merged by direction, so `54 → Freiberg / Max-Eyth-See` is one row and one tile showing whichever
+   bus comes first that way.
 3. Add more stops the same way. One widget can mix lines from any number of stops, like the LCD
    display did.
 4. Put the tiles in the order you want with ▲ ▼. The widget shows them in that order (the first 6 with
