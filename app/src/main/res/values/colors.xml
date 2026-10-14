@@ -8,33 +8,36 @@
     <color name="soft_blossom">#F4B7C6</color>
     <color name="cotton_candy">#FF92B1</color>
     <color name="petal_rouge">#FE7295</color>
-    <!-- Not in the palette: a deep berry so text stays readable on the light pinks. -->
-    <color name="berry">#4A1426</color>
+    <!-- Not in the palette: a near-black plum for the chunky outlines and readable text. -->
+    <color name="ink">#2B1320</color>
 
     <!-- Roles: swap a theme by changing only these -->
-    <color name="widget_bg_start">@color/soft_blush</color>
-    <color name="widget_bg_end">@color/powder_blush_light</color>
-    <color name="widget_title">@color/berry</color>
-    <color name="widget_icon">@color/petal_rouge</color>
-    <color name="widget_text">@color/berry</color>
-    <color name="widget_text_secondary">#8A3F55</color>
+    <color name="outline">@color/ink</color>
+    <color name="widget_face">@color/soft_blush</color>
+    <color name="widget_shadow">@color/petal_rouge</color>
+    <color name="widget_text">@color/ink</color>
+    <color name="widget_text_secondary">#7A4A5C</color>
+    <color name="sticker">@color/cotton_candy</color>
+    <color name="button_face">#FFFFFF</color>
+    <color name="deco_circle">@color/cotton_candy</color>
+    <color name="deco_diamond">@color/sweet_salmon</color>
 
-    <color name="tile_start">@color/powder_blush</color>
-    <color name="tile_end">@color/soft_blossom</color>
-    <color name="tile_text">@color/berry</color>
+    <color name="tile_face">#FFFBFA</color>
+    <color name="tile_text">@color/ink</color>
     <color name="tile_accent">@color/petal_rouge</color>
-    <color name="tile_text_secondary">#7A2E44</color>
-    <color name="badge_bg">@color/berry</color>
-    <color name="badge_text">@color/soft_blush</color>
-    <color name="delay_bg">@color/petal_rouge</color>
+    <color name="tile_text_secondary">#7A4A5C</color>
+    <!-- Each tile gets the next of these for its offset shadow and line badge -->
+    <color name="tile_pop_1">@color/petal_rouge</color>
+    <color name="tile_pop_2">@color/cotton_candy</color>
+    <color name="tile_pop_3">@color/sweet_salmon</color>
+    <color name="tile_pop_4">@color/soft_blossom</color>
+    <color name="delay_bg">@color/ink</color>
 
     <!-- Tile whose train leaves within a minute -->
-    <color name="tile_soon_start">@color/petal_rouge</color>
-    <color name="tile_soon_end">@color/cotton_candy</color>
-    <color name="tile_soon_text">#FFFFFF</color>
-    <color name="badge_soon_bg">#FFFFFF</color>
-    <color name="badge_soon_text">@color/petal_rouge</color>
-    <color name="delay_soon_bg">@color/berry</color>
+    <color name="tile_soon_face">@color/petal_rouge</color>
+    <color name="tile_soon_shadow">@color/ink</color>
+    <color name="tile_soon_text">@color/ink</color>
+    <color name="badge_soon_face">#FFFFFF</color>
 
     <color name="launcher_bg">@color/cotton_candy</color>
 </resources>

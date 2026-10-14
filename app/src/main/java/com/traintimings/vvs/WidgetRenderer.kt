@@ -15,6 +15,8 @@ import java.time.format.DateTimeFormatter
 object WidgetRenderer {
 
     private const val MAX_TILES = 6
+    private val TILE_STYLES = intArrayOf(R.drawable.tile_bg_1, R.drawable.tile_bg_2, R.drawable.tile_bg_3, R.drawable.tile_bg_4)
+    private val BADGE_STYLES = intArrayOf(R.drawable.badge_1, R.drawable.badge_2, R.drawable.badge_3, R.drawable.badge_4)
 
     fun render(ctx: Context, mgr: AppWidgetManager, id: Int, status: String? = null) {
         val views = RemoteViews(ctx.packageName, R.layout.widget_train)
@@ -60,9 +62,9 @@ object WidgetRenderer {
         } else {
             views.setViewVisibility(R.id.empty_text, View.GONE)
             // Fill the grid row by row; pad the last row so tiles keep the same width.
-            tiles.chunked(columns).forEach { chunk ->
+            tiles.chunked(columns).forEachIndexed { r, chunk ->
                 val row = RemoteViews(ctx.packageName, R.layout.widget_grid_row)
-                chunk.forEach { row.addView(R.id.grid_row, tile(ctx, it, now, fmt)) }
+                chunk.forEachIndexed { c, line -> row.addView(R.id.grid_row, tile(ctx, line, r * columns + c, now, fmt)) }
                 repeat(columns - chunk.size) {
                     val filler = RemoteViews(ctx.packageName, R.layout.widget_tile)
                     filler.setViewVisibility(R.id.tile_root, View.INVISIBLE)
@@ -82,13 +84,17 @@ object WidgetRenderer {
         mgr.updateAppWidget(id, views)
     }
 
-    private fun tile(ctx: Context, line: UpcomingLine, now: Instant, fmt: DateTimeFormatter): RemoteViews {
+    private fun tile(ctx: Context, line: UpcomingLine, index: Int, now: Instant, fmt: DateTimeFormatter): RemoteViews {
         val d = line.next
         val t = RemoteViews(ctx.packageName, R.layout.widget_tile)
+        // Cycle the pop colour (offset shadow + line badge) so neighbouring tiles differ.
+        val pop = index % TILE_STYLES.size
+        t.setInt(R.id.tile_root, "setBackgroundResource", TILE_STYLES[pop])
+        t.setInt(R.id.badge_text, "setBackgroundResource", BADGE_STYLES[pop])
         t.setTextViewText(R.id.badge_text, d.line)
         t.setTextViewText(R.id.destination, d.destination)
 
-        // Big countdown for the next train; the tile turns hot pink when it's about to leave.
+        // Big countdown for the next train; the tile turns solid pink when it's about to leave.
         val minutes = Countdown.minutesUntil(d.time, now)
         val soon = minutes <= 1
         when {
@@ -125,10 +131,6 @@ object WidgetRenderer {
             val text = ctx.getColor(R.color.tile_soon_text)
             t.setInt(R.id.tile_root, "setBackgroundResource", R.drawable.tile_soon_bg)
             t.setInt(R.id.badge_text, "setBackgroundResource", R.drawable.badge_soon)
-            t.setInt(R.id.delay, "setBackgroundResource", R.drawable.delay_soon_bg)
-            t.setTextColor(R.id.badge_text, ctx.getColor(R.color.badge_soon_text))
-            t.setTextColor(R.id.destination, text)
-            t.setTextColor(R.id.countdown, text)
             t.setTextColor(R.id.countdown_unit, text)
             t.setTextColor(R.id.then, text)
         }
@@ -151,7 +153,7 @@ object WidgetRenderer {
         val width = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0)
         val height = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 0)
         val columns = if (width >= 400) 3 else 2
-        val rows = if (height <= 0) 3 else ((height - 56) / 58).coerceIn(1, 3)
+        val rows = if (height <= 0) 3 else ((height - 62) / 60).coerceIn(1, 3)
         return columns to rows
     }
 
