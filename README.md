@@ -33,8 +33,8 @@ JSON so stops can be searched by name.
 3. Add more stops the same way. One widget can mix lines from any number of stops, like the LCD
    display did.
 4. Put the tiles in the order you want with ▲ ▼. The widget shows them in that order (the first 6 with
-   a train coming). Tap ✦ on a row to choose when that tile lights up (never, leaving now, or within
-   1 to 15 minutes; default 1). Tap a row to change that stop's lines, long-press to remove it.
+   a train coming). Tap ✦ on a row to choose when that tile lights up on a scroll wheel (Off, Now, or
+   1 to 15 min; default 1 min). Tap a row to change that stop's lines, long-press to remove it.
 5. Save. Tap the gear on the widget any time to change it.
 
 ## How it behaves

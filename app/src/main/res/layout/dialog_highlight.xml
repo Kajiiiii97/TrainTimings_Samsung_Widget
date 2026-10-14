@@ -33,9 +33,10 @@
         android:textColor="@color/screen_text"
         android:textSize="18sp" />
 
+    <!-- Fixed width: the wheel sizes itself for the default text size, which clips our larger text. -->
     <NumberPicker
         android:id="@+id/picker"
-        android:layout_width="wrap_content"
+        android:layout_width="160dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
         android:descendantFocusability="blocksDescendants" />
