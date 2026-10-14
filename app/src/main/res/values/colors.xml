@@ -1,8 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="widget_bg">#F7F8FA</color>
-    <color name="widget_text">#1A1C1E</color>
-    <color name="widget_text_secondary">#5E6570</color>
-    <color name="widget_delay">#C62828</color>
-    <color name="launcher_bg">#FFD800</color>
+    <!-- Palette -->
+    <color name="jasmine">#FFD373</color>
+    <color name="harvest_orange">#FD8021</color>
+    <color name="cayenne_red">#E05400</color>
+    <color name="twitter_blue">#0073CC</color>
+    <color name="egyptian_blue">#003488</color>
+    <color name="deep_navy">#001D59</color>
+    <color name="ink_black">#001524</color>
+
+    <!-- Roles -->
+    <color name="widget_text">#FFFFFF</color>
+    <color name="widget_text_secondary">#9FB4DA</color>
+    <color name="launcher_bg">@color/jasmine</color>
 </resources>

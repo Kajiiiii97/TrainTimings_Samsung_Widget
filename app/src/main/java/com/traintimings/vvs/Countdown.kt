@@ -3,7 +3,7 @@ package com.traintimings.vvs
 import java.time.Duration
 import java.time.Instant
 
-/** One widget row: a line + direction with its next train and the one after. */
+/** One widget tile: a line + direction with its next train and the one after. */
 data class UpcomingLine(val next: Departure, val after: Departure?)
 
 object Countdown {
@@ -17,6 +17,15 @@ object Countdown {
             .values
             .map { UpcomingLine(it[0], it.getOrNull(1)) }
             .sortedBy { it.next.time }
+
+    /**
+     * The tiles to show: the [limit] soonest lines, laid out in a fixed line order
+     * so a tile doesn't jump around the grid every time a train leaves.
+     */
+    fun tiles(departures: List<Departure>, now: Instant, limit: Int): List<UpcomingLine> =
+        group(departures, now)
+            .take(limit)
+            .sortedWith(LineOrder.comparator({ it.next.lineDirection }, { it.next.productClass }))
 
     /** Whole minutes until [time], rounded down, never negative. */
     fun minutesUntil(time: Instant, now: Instant): Long =

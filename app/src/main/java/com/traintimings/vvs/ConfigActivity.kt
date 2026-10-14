@@ -19,6 +19,7 @@ import android.widget.EditText
 import android.widget.ListView
 import android.widget.TextView
 import android.widget.Toast
+import java.time.Instant
 import java.util.concurrent.Executors
 
 /**
@@ -37,6 +38,7 @@ class ConfigActivity : Activity() {
     private var stops: List<Stop> = emptyList()
     private var selectedStop: Stop? = null
     private var options: List<LineDirection> = emptyList()
+    private var fetched: DepartureCache? = null
     private var preselected: Set<LineDirection> = emptySet()
     private var requestToken = 0
 
@@ -139,6 +141,7 @@ class ConfigActivity : Activity() {
 
     private fun pickStop(stop: Stop) {
         selectedStop = stop
+        fetched = null
         mode = Mode.LINES
         searchRow.visibility = View.GONE
         back.visibility = View.VISIBLE
@@ -156,6 +159,7 @@ class ConfigActivity : Activity() {
                         selectedStop = Stop(stop.id, board.stopName)
                         title.text = board.stopName
                     }
+                    fetched = DepartureCache(Instant.now(), board.departures, null)
                     showLines(board.departures)
                 }
                     .onFailure { status.text = getString(R.string.network_error, it.message ?: "") }
@@ -170,14 +174,7 @@ class ConfigActivity : Activity() {
         preselected.forEach { seen.putIfAbsent(it, -1) }
 
         options = seen.entries
-            .sortedWith(
-                compareBy<Map.Entry<LineDirection, Int>>(
-                    { rank(it.key.line, it.value) },
-                    { lineNumber(it.key.line) },
-                    { it.key.line },
-                    { it.key.destination },
-                ),
-            )
+            .sortedWith(LineOrder.comparator({ it.key }, { it.value }))
             .map { it.key }
 
         list.choiceMode = ListView.CHOICE_MODE_MULTIPLE
@@ -194,7 +191,7 @@ class ConfigActivity : Activity() {
         val config = WidgetConfig(stop.id, stop.name, selections)
 
         if (hasWidget()) {
-            WidgetStore.saveConfig(this, widgetId, config)
+            WidgetStore.saveConfig(this, widgetId, config, fetched)
             WidgetRenderer.render(this, AppWidgetManager.getInstance(this), widgetId)
             Scheduler.ensurePeriodic(this)
             Scheduler.refreshNow(this)
@@ -222,17 +219,4 @@ class ConfigActivity : Activity() {
         val pending = PendingIntent.getBroadcast(this, 0, callback, flags)
         mgr.requestPinAppWidget(ComponentName(this, TrainWidgetProvider::class.java), null, pending)
     }
-
-    private fun rank(line: String, productClass: Int): Int {
-        val l = line.uppercase()
-        return when {
-            l.startsWith("S") && l.getOrNull(1)?.isDigit() == true -> 0
-            l.startsWith("U") && l.getOrNull(1)?.isDigit() == true -> 1
-            l.startsWith("R") || l.startsWith("MEX") || l.startsWith("IRE") || l.startsWith("IC") -> 2
-            productClass in 0..4 -> 3
-            else -> 4
-        }
-    }
-
-    private fun lineNumber(line: String): Int = line.filter { it.isDigit() }.take(4).toIntOrNull() ?: Int.MAX_VALUE
 }

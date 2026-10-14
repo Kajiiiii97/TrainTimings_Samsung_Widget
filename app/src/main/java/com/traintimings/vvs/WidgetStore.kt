@@ -10,11 +10,18 @@ object WidgetStore {
     fun config(ctx: Context, id: Int): WidgetConfig? =
         prefs(ctx).getString("cfg_$id", null)?.let { runCatching { WidgetConfig.fromJson(JSONObject(it)) }.getOrNull() }
 
-    fun saveConfig(ctx: Context, id: Int, config: WidgetConfig) {
-        prefs(ctx).edit()
-            .putString("cfg_$id", config.toJson().toString())
-            .remove("cache_$id")
-            .apply()
+    /**
+     * Saves a widget's config. Cached departures are unfiltered, so they stay valid when only the
+     * chosen lines change; [fresh] (e.g. what the setup screen just downloaded) replaces them.
+     */
+    fun saveConfig(ctx: Context, id: Int, config: WidgetConfig, fresh: DepartureCache? = null) {
+        val sameStop = config(ctx, id)?.stopId == config.stopId
+        val edit = prefs(ctx).edit().putString("cfg_$id", config.toJson().toString())
+        when {
+            fresh != null -> edit.putString("cache_$id", fresh.toJson().toString())
+            !sameStop -> edit.remove("cache_$id")
+        }
+        edit.apply()
     }
 
     fun cache(ctx: Context, id: Int): DepartureCache? =

@@ -6,12 +6,15 @@ for the lines and directions you choose. It uses the same `www3.vvs.de/mngvvs` E
 JSON so stops can be searched by name.
 
 ```
-Stuttgart, Pragsattel             ⟳ ⚙
-[U12] Dürrlewang                3 min
-                          then 13 min
-[U14] Vaihingen            7 min  +2
-      Pl. 2               then 17 min
-                         Updated 13:58
+Stuttgart Hauptbahnhof                    ⟳ ⚙
+┌──────────────────────┐ ┌──────────────────────┐
+│ S1  Herrenberg       │ │ U12 Dürrlewang       │  ← orange when it's
+│ 4 min    then 19 min │ │ now      then 10 min │    leaving now
+├──────────────────────┤ ├──────────────────────┤
+│ U14 Vaihingen        │ │ U14 Mühlhausen       │
+│ 7 min +2 then 17 min │ │ 12 min   then 22 min │
+└──────────────────────┘ └──────────────────────┘
+                                   Updated 13:58
 ```
 
 ## Install
@@ -32,14 +35,17 @@ Stuttgart, Pragsattel             ⟳ ⚙
 
 ## How it behaves
 
-- One row per line + direction: a big countdown to the next train and a smaller "then X min" for
-  the one after. Countdowns include real-time delays (shown as `+2` in red); cancelled trips are skipped.
-  Trains more than an hour away show their clock time instead.
+- A grid of up to 6 tiles, one per line + direction: a big countdown to the next train and a smaller
+  "then X min" for the one after. Countdowns include real-time delays (the red `+2` chip); cancelled
+  trips are skipped; trains more than an hour away show their clock time. A tile turns orange when its
+  train is leaving within a minute. Tiles stay in a fixed line order so they don't jump around.
+- Grid size follows the widget size: 2 columns (3 on very wide widgets), up to 3 rows. The default
+  4×3 size fits all 6; at 4×2 you get 4.
 - Countdowns tick over every minute while the screen is on, using the cached data (no extra downloads).
-- Resize the widget taller to show more lines.
 - Refreshes every 15 minutes, again right after each train leaves, and whenever you tap it.
 - Offline it keeps the last data and drops trains that have already left.
-- Follows your One UI colour palette and dark mode on Android 12+.
+- Colours: Ink Black / Deep Navy background, Egyptian → Twitter Blue tiles, Jasmine accents,
+  Harvest Orange for trains leaving now, Cayenne Red for delays.
 
 Samsung tip: if the widget stops updating, go to Settings → Battery → Background usage limits and add
 Train Timings to **Never sleeping apps**.

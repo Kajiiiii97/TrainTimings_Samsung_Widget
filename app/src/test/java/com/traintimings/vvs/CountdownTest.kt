@@ -61,4 +61,26 @@ class CountdownTest {
         assertEquals(1, Countdown.minutesUntil(now.plusSeconds(60), now))
         assertEquals(0, Countdown.minutesUntil(now.minusSeconds(20), now))
     }
+
+    @Test
+    fun tilesKeepTheSoonestLinesInAFixedOrder() {
+        val tiles = Countdown.tiles(
+            listOf(
+                dep("56", "Münster", 1),
+                dep("U14", "Vaihingen", 2),
+                dep("S1", "Herrenberg", 3),
+                dep("U12", "Dürrlewang", 4),
+                dep("U14", "Mühlhausen", 5),
+                dep("S1", "Kirchheim", 6),
+                dep("U12", "Remseck", 40),
+            ),
+            now,
+            limit = 6,
+        )
+        // Remseck is the 7th soonest so it's dropped; the rest are sorted S-Bahn, Stadtbahn, bus.
+        assertEquals(
+            listOf("S1 Herrenberg", "S1 Kirchheim", "U12 Dürrlewang", "U14 Mühlhausen", "U14 Vaihingen", "56 Münster"),
+            tiles.map { "${it.next.line} ${it.next.destination}" },
+        )
+    }
 }

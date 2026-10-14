@@ -14,6 +14,8 @@ import java.time.format.DateTimeFormatter
 
 object WidgetRenderer {
 
+    private const val MAX_TILES = 6
+
     fun render(ctx: Context, mgr: AppWidgetManager, id: Int, status: String? = null) {
         val views = RemoteViews(ctx.packageName, R.layout.widget_train)
         views.removeAllViews(R.id.rows)
@@ -39,10 +41,14 @@ object WidgetRenderer {
         val fmt = formatter(ctx)
         val cache = WidgetStore.cache(ctx, id)
         val now = Instant.now()
-        val lines = Countdown.group(cache?.departures.orEmpty().filter(config::matches), now)
-            .take(rowCount(mgr, id))
+        val (columns, maxRows) = gridSize(mgr, id)
+        val tiles = Countdown.tiles(
+            cache?.departures.orEmpty().filter(config::matches),
+            now,
+            minOf(MAX_TILES, columns * maxRows),
+        )
 
-        if (lines.isEmpty()) {
+        if (tiles.isEmpty()) {
             showMessage(
                 views,
                 when {
@@ -53,7 +59,17 @@ object WidgetRenderer {
             )
         } else {
             views.setViewVisibility(R.id.empty_text, View.GONE)
-            lines.forEach { views.addView(R.id.rows, row(ctx, it, now, fmt)) }
+            // Fill the grid row by row; pad the last row so tiles keep the same width.
+            tiles.chunked(columns).forEach { chunk ->
+                val row = RemoteViews(ctx.packageName, R.layout.widget_grid_row)
+                chunk.forEach { row.addView(R.id.grid_row, tile(ctx, it, now, fmt)) }
+                repeat(columns - chunk.size) {
+                    val filler = RemoteViews(ctx.packageName, R.layout.widget_tile)
+                    filler.setViewVisibility(R.id.tile_root, View.INVISIBLE)
+                    row.addView(R.id.grid_row, filler)
+                }
+                views.addView(R.id.rows, row)
+            }
         }
 
         val fetchedAt = cache?.fetchedAt
@@ -66,52 +82,56 @@ object WidgetRenderer {
         mgr.updateAppWidget(id, views)
     }
 
-    private fun row(ctx: Context, line: UpcomingLine, now: Instant, fmt: DateTimeFormatter): RemoteViews {
+    private fun tile(ctx: Context, line: UpcomingLine, now: Instant, fmt: DateTimeFormatter): RemoteViews {
         val d = line.next
-        val r = RemoteViews(ctx.packageName, R.layout.widget_row)
-        r.setTextViewText(R.id.badge_text, d.line)
-        r.setInt(R.id.badge_bg, "setColorFilter", LineColors.background(d.line, d.productClass))
-        r.setTextViewText(R.id.destination, d.destination)
+        val t = RemoteViews(ctx.packageName, R.layout.widget_tile)
+        t.setTextViewText(R.id.badge_text, d.line)
+        t.setTextViewText(R.id.destination, d.destination)
 
-        if (d.platform.isNotBlank()) {
-            r.setTextViewText(R.id.platform, ctx.getString(R.string.platform_short, d.platform))
-            r.setViewVisibility(R.id.platform, View.VISIBLE)
-        } else {
-            r.setViewVisibility(R.id.platform, View.GONE)
-        }
-
-        // Big countdown for the next train.
+        // Big countdown for the next train; the tile turns orange when it's about to leave.
         val minutes = Countdown.minutesUntil(d.time, now)
+        val soon = minutes <= 1
         when {
             minutes == 0L -> {
-                r.setTextViewText(R.id.countdown, ctx.getString(R.string.now))
-                r.setViewVisibility(R.id.countdown_unit, View.GONE)
+                t.setTextViewText(R.id.countdown, ctx.getString(R.string.now))
+                t.setViewVisibility(R.id.countdown_unit, View.GONE)
             }
             minutes >= 60 -> {
-                r.setTextViewText(R.id.countdown, fmt.format(d.time))
-                r.setViewVisibility(R.id.countdown_unit, View.GONE)
+                t.setTextViewText(R.id.countdown, fmt.format(d.time))
+                t.setViewVisibility(R.id.countdown_unit, View.GONE)
             }
             else -> {
-                r.setTextViewText(R.id.countdown, minutes.toString())
-                r.setViewVisibility(R.id.countdown_unit, View.VISIBLE)
+                t.setTextViewText(R.id.countdown, minutes.toString())
+                t.setViewVisibility(R.id.countdown_unit, View.VISIBLE)
             }
         }
         if (d.delayMinutes > 0) {
-            r.setTextViewText(R.id.delay, "+${d.delayMinutes}")
-            r.setViewVisibility(R.id.delay, View.VISIBLE)
+            t.setTextViewText(R.id.delay, "+${d.delayMinutes}")
+            t.setViewVisibility(R.id.delay, View.VISIBLE)
         } else {
-            r.setViewVisibility(R.id.delay, View.GONE)
+            t.setViewVisibility(R.id.delay, View.GONE)
         }
 
-        // Smaller "then 14 min" for the train after.
+        // Small "then 14 min" for the train after.
         val after = line.after
         if (after != null) {
-            r.setTextViewText(R.id.then, ctx.getString(R.string.then_in, shortWait(ctx, after, now, fmt)))
-            r.setViewVisibility(R.id.then, View.VISIBLE)
+            t.setTextViewText(R.id.then, ctx.getString(R.string.then_in, shortWait(ctx, after, now, fmt)))
+            t.setViewVisibility(R.id.then, View.VISIBLE)
         } else {
-            r.setViewVisibility(R.id.then, View.GONE)
+            t.setViewVisibility(R.id.then, View.GONE)
         }
-        return r
+
+        if (soon) {
+            val ink = ctx.getColor(R.color.ink_black)
+            t.setInt(R.id.tile_root, "setBackgroundResource", R.drawable.tile_soon_bg)
+            t.setInt(R.id.badge_text, "setBackgroundResource", R.drawable.badge_soon)
+            t.setTextColor(R.id.badge_text, ctx.getColor(R.color.jasmine))
+            t.setTextColor(R.id.destination, ink)
+            t.setTextColor(R.id.countdown, ink)
+            t.setTextColor(R.id.countdown_unit, ink)
+            t.setTextColor(R.id.then, ink)
+        }
+        return t
     }
 
     private fun shortWait(ctx: Context, d: Departure, now: Instant, fmt: DateTimeFormatter): String {
@@ -124,11 +144,14 @@ object WidgetRenderer {
         views.setViewVisibility(R.id.empty_text, View.VISIBLE)
     }
 
-    /** Fit as many rows as the widget's current height allows. */
-    private fun rowCount(mgr: AppWidgetManager, id: Int): Int {
-        val height = mgr.getAppWidgetOptions(id).getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 0)
-        if (height <= 0) return 4
-        return ((height - 70) / 44).coerceIn(1, 6)
+    /** Two columns on phones, three on wide widgets; as many rows as the height fits (max 3). */
+    private fun gridSize(mgr: AppWidgetManager, id: Int): Pair<Int, Int> {
+        val options = mgr.getAppWidgetOptions(id)
+        val width = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0)
+        val height = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 0)
+        val columns = if (width >= 400) 3 else 2
+        val rows = if (height <= 0) 3 else ((height - 56) / 58).coerceIn(1, 3)
+        return columns to rows
     }
 
     private fun formatter(ctx: Context): DateTimeFormatter =
