@@ -32,10 +32,11 @@
     <string name="back">Back</string>
     <string name="save">Save</string>
     <string name="done">Done</string>
+    <string name="set">Set</string>
     <string name="add_stop">+ Add stop</string>
     <string name="your_stops">Your stops</string>
-    <string name="your_stops_hint">The widget shows these in this order (the first 6 with a train coming). Use ▲ ▼ to reorder and ✦ to choose when a tile lights up. Tap a row to change that stop\'s lines, long-press to remove it.</string>
-    <string name="highlight_title">Light up this tile when the train is…</string>
+    <string name="your_stops_hint">The widget shows these in this order (the first 6 with a train coming). Use ▲ ▼ to reorder and the ✦ chip to choose when a tile lights up. Tap a row to change that stop\'s lines, long-press to remove it.</string>
+    <string name="highlight_title">Light up when the train is…</string>
     <string name="highlight_off">Never</string>
     <string name="highlight_now">Leaving now</string>
     <string name="highlight_within">Within %1$d min</string>

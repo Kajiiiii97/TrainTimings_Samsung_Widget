@@ -38,5 +38,13 @@
     <color name="tile_soon_text">@color/ink</color>
     <color name="badge_soon_face">#FFFFFF</color>
 
+    <!-- Settings screen -->
+    <color name="screen_bg">@color/soft_blush</color>
+    <color name="screen_text">@color/ink</color>
+    <color name="screen_text_secondary">#7A4A5C</color>
+    <color name="button_primary">@color/petal_rouge</color>
+    <color name="card_face">#FFFBFA</color>
+    <color name="ripple">#40FE7295</color>
+
     <color name="launcher_bg">@color/cotton_candy</color>
 </resources>

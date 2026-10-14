@@ -2,6 +2,7 @@ package com.traintimings.vvs
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.app.Dialog
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
@@ -10,6 +11,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.TypedValue
 import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
@@ -20,6 +22,7 @@ import android.widget.BaseAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ListView
+import android.widget.NumberPicker
 import android.widget.TextView
 import android.widget.Toast
 import java.time.Instant
@@ -36,6 +39,8 @@ class ConfigActivity : Activity() {
 
     private companion object {
         val HIGHLIGHT_CHOICES = listOf(WidgetConfig.HIGHLIGHT_OFF, 0, 1, 2, 3, 4, 5, 7, 10, 15)
+        val CARD_STYLES = intArrayOf(R.drawable.card_bg_1, R.drawable.card_bg_2, R.drawable.card_bg_3, R.drawable.card_bg_4)
+        val BADGE_STYLES = intArrayOf(R.drawable.badge_1, R.drawable.badge_2, R.drawable.badge_3, R.drawable.badge_4)
     }
 
     private val io = Executors.newSingleThreadExecutor()
@@ -175,12 +180,19 @@ class ConfigActivity : Activity() {
         override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
             val v = convertView ?: layoutInflater.inflate(R.layout.item_tile_entry, parent, false)
             val key = order[position]
-            v.findViewById<TextView>(R.id.position).text = (position + 1).toString()
+            // Same playful cycling as the widget tiles: each row gets the next pop colour.
+            val pop = position % CARD_STYLES.size
+            v.findViewById<View>(R.id.card).setBackgroundResource(CARD_STYLES[pop])
+            v.findViewById<TextView>(R.id.position).apply {
+                text = (position + 1).toString()
+                setBackgroundResource(BADGE_STYLES[pop])
+            }
             v.findViewById<TextView>(R.id.line).text =
                 key.line?.label ?: getString(R.string.all_lines)
             v.findViewById<TextView>(R.id.stop).text = stopName(key.stopId)
             v.findViewById<Button>(R.id.highlight).apply {
                 text = highlightChip(highlight[key] ?: WidgetConfig.DEFAULT_HIGHLIGHT)
+                setBackgroundResource(BADGE_STYLES[pop])
                 setOnClickListener { chooseHighlight(key) }
             }
             v.findViewById<Button>(R.id.up).apply {
@@ -201,6 +213,7 @@ class ConfigActivity : Activity() {
         else -> getString(R.string.highlight_chip, minutes)
     }
 
+    /** Scroll-wheel picker for when this row's tile lights up. */
     private fun chooseHighlight(key: TileKey) {
         val values = HIGHLIGHT_CHOICES
         val labels = values.map {
@@ -210,16 +223,31 @@ class ConfigActivity : Activity() {
                 else -> getString(R.string.highlight_within, it)
             }
         }.toTypedArray()
-        val current = values.indexOf(highlight[key] ?: WidgetConfig.DEFAULT_HIGHLIGHT)
-        AlertDialog.Builder(this)
-            .setTitle(R.string.highlight_title)
-            .setSingleChoiceItems(labels, current) { dialog, which ->
-                highlight[key] = values[which]
-                (list.adapter as? OrderAdapter)?.notifyDataSetChanged()
-                dialog.dismiss()
+
+        val dialog = Dialog(this, R.style.PlayfulDialog)
+        dialog.setContentView(R.layout.dialog_highlight)
+        dialog.findViewById<TextView>(R.id.highlight_line).text =
+            (key.line?.label ?: getString(R.string.all_lines)) + " · " + stopName(key.stopId)
+        val picker = dialog.findViewById<NumberPicker>(R.id.picker).apply {
+            minValue = 0
+            maxValue = labels.size - 1
+            displayedValues = labels
+            wrapSelectorWheel = false
+            value = values.indexOf(highlight[key] ?: WidgetConfig.DEFAULT_HIGHLIGHT).coerceAtLeast(0)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                textColor = getColor(R.color.screen_text)
+                textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 20f, resources.displayMetrics)
+                selectionDividerHeight = (resources.displayMetrics.density * 2).toInt()
             }
-            .setNegativeButton(android.R.string.cancel, null)
-            .show()
+        }
+        dialog.findViewById<Button>(R.id.cancel).setOnClickListener { dialog.dismiss() }
+        dialog.findViewById<Button>(R.id.ok).setOnClickListener {
+            highlight[key] = values[picker.value]
+            (list.adapter as? OrderAdapter)?.notifyDataSetChanged()
+            dialog.dismiss()
+        }
+        dialog.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        dialog.show()
     }
 
     private fun showSearch() {
@@ -232,7 +260,7 @@ class ConfigActivity : Activity() {
         title.setText(R.string.pick_stop)
         status.text = if (searchResults.isEmpty()) getString(R.string.search_hint_long) else ""
         list.choiceMode = ListView.CHOICE_MODE_NONE
-        list.adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, searchResults.map { it.name })
+        list.adapter = ArrayAdapter(this, R.layout.item_card, searchResults.map { it.name })
     }
 
     private fun search() {
@@ -301,7 +329,7 @@ class ConfigActivity : Activity() {
             .map { it.key }
 
         list.choiceMode = ListView.CHOICE_MODE_MULTIPLE
-        list.adapter = ArrayAdapter(this, android.R.layout.simple_list_item_multiple_choice, options.map { it.label })
+        list.adapter = ArrayAdapter(this, R.layout.item_check, options.map { it.label })
         options.forEachIndexed { i, opt -> list.setItemChecked(i, opt in preselected) }
         status.setText(if (options.isEmpty()) R.string.no_lines else R.string.pick_lines)
         save.visibility = View.VISIBLE

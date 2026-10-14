@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ripple xmlns:android="http://schemas.android.com/apk/res/android" android:color="@color/ripple">
+    <item>
+        <layer-list>
+            <item android:left="3dp" android:top="3dp">
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/tile_pop_4" />
+                    <corners android:radius="14dp" />
+                </shape>
+            </item>
+            <item android:bottom="3dp" android:right="3dp">
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/card_face" />
+                    <stroke android:width="2dp" android:color="@color/outline" />
+                    <corners android:radius="14dp" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+</ripple>

@@ -4,20 +4,43 @@
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:paddingStart="18dp"
+    android:paddingTop="14dp"
+    android:paddingEnd="18dp"
+    android:paddingBottom="14dp">
+
+    <!-- Tilted app sticker, as on the playful landing-page style -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
+        android:background="@drawable/sticker_bg"
+        android:fontFamily="sans-serif-black"
+        android:paddingStart="10dp"
+        android:paddingTop="3dp"
+        android:paddingEnd="13dp"
+        android:paddingBottom="6dp"
+        android:rotation="-2"
+        android:text="@string/app_name"
+        android:textAllCaps="true"
+        android:textColor="@color/screen_text"
+        android:textSize="12sp" />
 
     <TextView
         android:id="@+id/title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:fontFamily="sans-serif-black"
         android:text="@string/pick_stop"
-        android:textAppearance="?android:attr/textAppearanceLarge" />
+        android:textColor="@color/screen_text"
+        android:textSize="28sp" />
 
     <LinearLayout
         android:id="@+id/search_row"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="10dp"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
@@ -26,16 +49,25 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:background="@drawable/input_bg"
+            android:fontFamily="sans-serif-medium"
             android:hint="@string/search_hint"
             android:imeOptions="actionSearch"
             android:importantForAutofill="no"
             android:inputType="text"
-            android:singleLine="true" />
+            android:minHeight="50dp"
+            android:paddingStart="14dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="3dp"
+            android:singleLine="true"
+            android:textColor="@color/screen_text" />
 
         <Button
             android:id="@+id/search"
+            style="@style/PillButton.Primary"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
             android:text="@string/search" />
     </LinearLayout>
 
@@ -43,24 +75,34 @@
         android:id="@+id/status"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="4dp"
-        android:textAppearance="?android:attr/textAppearanceSmall" />
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="6dp"
+        android:fontFamily="sans-serif-medium"
+        android:lineSpacingExtra="2dp"
+        android:textColor="@color/screen_text_secondary"
+        android:textSize="13sp" />
 
     <ListView
         android:id="@+id/list"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:divider="@android:color/transparent"
+        android:dividerHeight="8dp"
+        android:listSelector="@android:color/transparent"
+        android:paddingBottom="8dp" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center_vertical"
         android:orientation="horizontal">
 
         <Button
             android:id="@+id/back"
-            style="?android:attr/borderlessButtonStyle"
+            style="@style/PillButton.Text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/back"
@@ -68,14 +110,16 @@
 
         <Button
             android:id="@+id/add_stop"
-            style="?android:attr/borderlessButtonStyle"
+            style="@style/PillButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginEnd="10dp"
             android:text="@string/add_stop"
             android:visibility="gone" />
 
         <Button
             android:id="@+id/save"
+            style="@style/PillButton.Primary"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
