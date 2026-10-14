@@ -20,7 +20,6 @@
         android:paddingTop="3dp"
         android:paddingEnd="13dp"
         android:paddingBottom="6dp"
-        android:rotation="-2"
         android:textColor="@color/screen_text"
         android:textSize="12sp" />
 
