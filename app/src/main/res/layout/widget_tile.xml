@@ -29,7 +29,7 @@
             android:paddingStart="4dp"
             android:paddingEnd="4dp"
             android:singleLine="true"
-            android:textColor="@color/ink_black"
+            android:textColor="@color/badge_text"
             android:textSize="11sp"
             android:textStyle="bold" />
 
@@ -41,7 +41,7 @@
             android:layout_weight="1"
             android:ellipsize="end"
             android:singleLine="true"
-            android:textColor="@color/widget_text"
+            android:textColor="@color/tile_text"
             android:textSize="12sp" />
     </LinearLayout>
 
@@ -58,7 +58,7 @@
             android:layout_height="wrap_content"
             android:includeFontPadding="false"
             android:singleLine="true"
-            android:textColor="@color/widget_text"
+            android:textColor="@color/tile_text"
             android:textSize="24sp"
             android:textStyle="bold" />
 
@@ -69,7 +69,7 @@
             android:layout_marginStart="2dp"
             android:singleLine="true"
             android:text="@string/min_unit"
-            android:textColor="@color/jasmine"
+            android:textColor="@color/tile_accent"
             android:textSize="12sp"
             android:textStyle="bold" />
 
@@ -95,7 +95,7 @@
             android:ellipsize="end"
             android:gravity="end"
             android:singleLine="true"
-            android:textColor="@color/widget_text_secondary"
+            android:textColor="@color/tile_text_secondary"
             android:textSize="11sp" />
     </LinearLayout>
 </LinearLayout>

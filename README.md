@@ -8,7 +8,7 @@ JSON so stops can be searched by name.
 ```
 Stuttgart Hauptbahnhof                    ⟳ ⚙
 ┌──────────────────────┐ ┌──────────────────────┐
-│ S1  Herrenberg       │ │ U12 Dürrlewang       │  ← orange when it's
+│ S1  Herrenberg       │ │ U12 Dürrlewang       │  ← hot pink when it's
 │ 4 min    then 19 min │ │ now      then 10 min │    leaving now
 ├──────────────────────┤ ├──────────────────────┤
 │ U14 Vaihingen        │ │ U14 Mühlhausen       │
@@ -37,15 +37,16 @@ Stuttgart Hauptbahnhof                    ⟳ ⚙
 
 - A grid of up to 6 tiles, one per line + direction: a big countdown to the next train and a smaller
   "then X min" for the one after. Countdowns include real-time delays (the red `+2` chip); cancelled
-  trips are skipped; trains more than an hour away show their clock time. A tile turns orange when its
+  trips are skipped; trains more than an hour away show their clock time. A tile turns hot pink when its
   train is leaving within a minute. Tiles stay in a fixed line order so they don't jump around.
 - Grid size follows the widget size: 2 columns (3 on very wide widgets), up to 3 rows. The default
   4×3 size fits all 6; at 4×2 you get 4.
 - Countdowns tick over every minute while the screen is on, using the cached data (no extra downloads).
 - Refreshes every 15 minutes, again right after each train leaves, and whenever you tap it.
 - Offline it keeps the last data and drops trains that have already left.
-- Colours: Ink Black / Deep Navy background, Egyptian → Twitter Blue tiles, Jasmine accents,
-  Harvest Orange for trains leaving now, Cayenne Red for delays.
+- Colours: Soft Blush → Powder Blush background, Powder Blush → Soft Blossom tiles, Petal Rouge
+  accents and delay chips, a Petal Rouge → Cotton Candy tile for trains leaving now, and deep berry
+  text for contrast. All colours are roles in `res/values/colors.xml`, so a new theme is one file.
 
 Samsung tip: if the widget stops updating, go to Settings → Battery → Background usage limits and add
 Train Timings to **Never sleeping apps**.

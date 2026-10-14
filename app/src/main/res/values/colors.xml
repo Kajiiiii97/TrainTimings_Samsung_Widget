@@ -1,16 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Palette -->
-    <color name="jasmine">#FFD373</color>
-    <color name="harvest_orange">#FD8021</color>
-    <color name="cayenne_red">#E05400</color>
-    <color name="twitter_blue">#0073CC</color>
-    <color name="egyptian_blue">#003488</color>
-    <color name="deep_navy">#001D59</color>
-    <color name="ink_black">#001524</color>
+    <color name="sweet_salmon">#FF9286</color>
+    <color name="powder_blush">#FBB3A5</color>
+    <color name="powder_blush_light">#FFC5BA</color>
+    <color name="soft_blush">#FFE5E5</color>
+    <color name="soft_blossom">#F4B7C6</color>
+    <color name="cotton_candy">#FF92B1</color>
+    <color name="petal_rouge">#FE7295</color>
+    <!-- Not in the palette: a deep berry so text stays readable on the light pinks. -->
+    <color name="berry">#4A1426</color>
 
-    <!-- Roles -->
-    <color name="widget_text">#FFFFFF</color>
-    <color name="widget_text_secondary">#9FB4DA</color>
-    <color name="launcher_bg">@color/jasmine</color>
+    <!-- Roles: swap a theme by changing only these -->
+    <color name="widget_bg_start">@color/soft_blush</color>
+    <color name="widget_bg_end">@color/powder_blush_light</color>
+    <color name="widget_title">@color/berry</color>
+    <color name="widget_icon">@color/petal_rouge</color>
+    <color name="widget_text">@color/berry</color>
+    <color name="widget_text_secondary">#8A3F55</color>
+
+    <color name="tile_start">@color/powder_blush</color>
+    <color name="tile_end">@color/soft_blossom</color>
+    <color name="tile_text">@color/berry</color>
+    <color name="tile_accent">@color/petal_rouge</color>
+    <color name="tile_text_secondary">#7A2E44</color>
+    <color name="badge_bg">@color/berry</color>
+    <color name="badge_text">@color/soft_blush</color>
+    <color name="delay_bg">@color/petal_rouge</color>
+
+    <!-- Tile whose train leaves within a minute -->
+    <color name="tile_soon_start">@color/petal_rouge</color>
+    <color name="tile_soon_end">@color/cotton_candy</color>
+    <color name="tile_soon_text">#FFFFFF</color>
+    <color name="badge_soon_bg">#FFFFFF</color>
+    <color name="badge_soon_text">@color/petal_rouge</color>
+    <color name="delay_soon_bg">@color/berry</color>
+
+    <color name="launcher_bg">@color/cotton_candy</color>
 </resources>

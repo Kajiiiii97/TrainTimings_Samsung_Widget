@@ -88,7 +88,7 @@ object WidgetRenderer {
         t.setTextViewText(R.id.badge_text, d.line)
         t.setTextViewText(R.id.destination, d.destination)
 
-        // Big countdown for the next train; the tile turns orange when it's about to leave.
+        // Big countdown for the next train; the tile turns hot pink when it's about to leave.
         val minutes = Countdown.minutesUntil(d.time, now)
         val soon = minutes <= 1
         when {
@@ -122,14 +122,15 @@ object WidgetRenderer {
         }
 
         if (soon) {
-            val ink = ctx.getColor(R.color.ink_black)
+            val text = ctx.getColor(R.color.tile_soon_text)
             t.setInt(R.id.tile_root, "setBackgroundResource", R.drawable.tile_soon_bg)
             t.setInt(R.id.badge_text, "setBackgroundResource", R.drawable.badge_soon)
-            t.setTextColor(R.id.badge_text, ctx.getColor(R.color.jasmine))
-            t.setTextColor(R.id.destination, ink)
-            t.setTextColor(R.id.countdown, ink)
-            t.setTextColor(R.id.countdown_unit, ink)
-            t.setTextColor(R.id.then, ink)
+            t.setInt(R.id.delay, "setBackgroundResource", R.drawable.delay_soon_bg)
+            t.setTextColor(R.id.badge_text, ctx.getColor(R.color.badge_soon_text))
+            t.setTextColor(R.id.destination, text)
+            t.setTextColor(R.id.countdown, text)
+            t.setTextColor(R.id.countdown_unit, text)
+            t.setTextColor(R.id.then, text)
         }
         return t
     }

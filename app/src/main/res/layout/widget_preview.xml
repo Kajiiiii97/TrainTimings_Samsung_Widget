@@ -5,7 +5,7 @@
     android:paddingStart="10dp" android:paddingTop="8dp" android:paddingEnd="10dp" android:paddingBottom="10dp">
     <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="4dp"
         android:layout_marginBottom="4dp" android:text="Stuttgart Hauptbahnhof"
-        android:textColor="@color/jasmine" android:textSize="14sp" android:textStyle="bold" />
+        android:textColor="@color/widget_title" android:textSize="14sp" android:textStyle="bold" />
     <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="horizontal">
         <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_margin="3dp"
             android:layout_weight="1" android:background="@drawable/tile_bg" android:gravity="center_vertical" android:orientation="vertical"
@@ -13,17 +13,17 @@
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
                 <TextView android:layout_width="wrap_content" android:layout_height="18dp" android:background="@drawable/badge" android:gravity="center"
                     android:minWidth="30dp" android:paddingStart="4dp" android:paddingEnd="4dp" android:text="S1"
-                    android:textColor="@color/ink_black" android:textSize="11sp" android:textStyle="bold" />
+                    android:textColor="@color/badge_text" android:textSize="11sp" android:textStyle="bold" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:layout_weight="1"
-                    android:singleLine="true" android:text="Herrenberg" android:textColor="@color/widget_text" android:textSize="12sp" />
+                    android:singleLine="true" android:text="Herrenberg" android:textColor="@color/tile_text" android:textSize="12sp" />
             </LinearLayout>
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="1dp" android:orientation="horizontal">
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:includeFontPadding="false"
-                    android:text="4" android:textColor="@color/widget_text" android:textSize="24sp" android:textStyle="bold" />
+                    android:text="4" android:textColor="@color/tile_text" android:textSize="24sp" android:textStyle="bold" />
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="2dp"
-                    android:text="@string/min_unit" android:textColor="@color/jasmine" android:textSize="12sp" android:textStyle="bold" />
+                    android:text="@string/min_unit" android:textColor="@color/tile_accent" android:textSize="12sp" android:textStyle="bold" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="4dp" android:layout_weight="1"
-                    android:gravity="end" android:singleLine="true" android:text="then 19m" android:textColor="@color/widget_text_secondary" android:textSize="11sp" />
+                    android:gravity="end" android:singleLine="true" android:text="then 19m" android:textColor="@color/tile_text_secondary" android:textSize="11sp" />
             </LinearLayout>
         </LinearLayout>
         <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_margin="3dp"
@@ -32,15 +32,15 @@
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
                 <TextView android:layout_width="wrap_content" android:layout_height="18dp" android:background="@drawable/badge_soon" android:gravity="center"
                     android:minWidth="30dp" android:paddingStart="4dp" android:paddingEnd="4dp" android:text="U12"
-                    android:textColor="@color/jasmine" android:textSize="11sp" android:textStyle="bold" />
+                    android:textColor="@color/badge_soon_text" android:textSize="11sp" android:textStyle="bold" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:layout_weight="1"
-                    android:singleLine="true" android:text="Dürrlewang" android:textColor="@color/ink_black" android:textSize="12sp" />
+                    android:singleLine="true" android:text="Dürrlewang" android:textColor="@color/tile_soon_text" android:textSize="12sp" />
             </LinearLayout>
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="1dp" android:orientation="horizontal">
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:includeFontPadding="false"
-                    android:text="now" android:textColor="@color/ink_black" android:textSize="24sp" android:textStyle="bold" />
+                    android:text="now" android:textColor="@color/tile_soon_text" android:textSize="24sp" android:textStyle="bold" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="4dp" android:layout_weight="1"
-                    android:gravity="end" android:singleLine="true" android:text="then 10m" android:textColor="@color/ink_black" android:textSize="11sp" />
+                    android:gravity="end" android:singleLine="true" android:text="then 10m" android:textColor="@color/tile_soon_text" android:textSize="11sp" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
@@ -51,20 +51,20 @@
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
                 <TextView android:layout_width="wrap_content" android:layout_height="18dp" android:background="@drawable/badge" android:gravity="center"
                     android:minWidth="30dp" android:paddingStart="4dp" android:paddingEnd="4dp" android:text="U14"
-                    android:textColor="@color/ink_black" android:textSize="11sp" android:textStyle="bold" />
+                    android:textColor="@color/badge_text" android:textSize="11sp" android:textStyle="bold" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:layout_weight="1"
-                    android:singleLine="true" android:text="Vaihingen" android:textColor="@color/widget_text" android:textSize="12sp" />
+                    android:singleLine="true" android:text="Vaihingen" android:textColor="@color/tile_text" android:textSize="12sp" />
             </LinearLayout>
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="1dp" android:orientation="horizontal">
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:includeFontPadding="false"
-                    android:text="7" android:textColor="@color/widget_text" android:textSize="24sp" android:textStyle="bold" />
+                    android:text="7" android:textColor="@color/tile_text" android:textSize="24sp" android:textStyle="bold" />
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="2dp"
-                    android:text="@string/min_unit" android:textColor="@color/jasmine" android:textSize="12sp" android:textStyle="bold" />
+                    android:text="@string/min_unit" android:textColor="@color/tile_accent" android:textSize="12sp" android:textStyle="bold" />
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="4dp"
                     android:background="@drawable/delay_bg" android:paddingStart="3dp" android:paddingEnd="3dp"
                     android:text="+2" android:textColor="#FFFFFF" android:textSize="10sp" android:textStyle="bold" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="4dp" android:layout_weight="1"
-                    android:gravity="end" android:singleLine="true" android:text="then 17m" android:textColor="@color/widget_text_secondary" android:textSize="11sp" />
+                    android:gravity="end" android:singleLine="true" android:text="then 17m" android:textColor="@color/tile_text_secondary" android:textSize="11sp" />
             </LinearLayout>
         </LinearLayout>
         <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_margin="3dp"
@@ -73,17 +73,17 @@
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
                 <TextView android:layout_width="wrap_content" android:layout_height="18dp" android:background="@drawable/badge" android:gravity="center"
                     android:minWidth="30dp" android:paddingStart="4dp" android:paddingEnd="4dp" android:text="U14"
-                    android:textColor="@color/ink_black" android:textSize="11sp" android:textStyle="bold" />
+                    android:textColor="@color/badge_text" android:textSize="11sp" android:textStyle="bold" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:layout_weight="1"
-                    android:singleLine="true" android:text="Mühlhausen" android:textColor="@color/widget_text" android:textSize="12sp" />
+                    android:singleLine="true" android:text="Mühlhausen" android:textColor="@color/tile_text" android:textSize="12sp" />
             </LinearLayout>
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="1dp" android:orientation="horizontal">
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:includeFontPadding="false"
-                    android:text="12" android:textColor="@color/widget_text" android:textSize="24sp" android:textStyle="bold" />
+                    android:text="12" android:textColor="@color/tile_text" android:textSize="24sp" android:textStyle="bold" />
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="2dp"
-                    android:text="@string/min_unit" android:textColor="@color/jasmine" android:textSize="12sp" android:textStyle="bold" />
+                    android:text="@string/min_unit" android:textColor="@color/tile_accent" android:textSize="12sp" android:textStyle="bold" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="4dp" android:layout_weight="1"
-                    android:gravity="end" android:singleLine="true" android:text="then 22m" android:textColor="@color/widget_text_secondary" android:textSize="11sp" />
+                    android:gravity="end" android:singleLine="true" android:text="then 22m" android:textColor="@color/tile_text_secondary" android:textSize="11sp" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
@@ -94,17 +94,17 @@
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
                 <TextView android:layout_width="wrap_content" android:layout_height="18dp" android:background="@drawable/badge" android:gravity="center"
                     android:minWidth="30dp" android:paddingStart="4dp" android:paddingEnd="4dp" android:text="42"
-                    android:textColor="@color/ink_black" android:textSize="11sp" android:textStyle="bold" />
+                    android:textColor="@color/badge_text" android:textSize="11sp" android:textStyle="bold" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:layout_weight="1"
-                    android:singleLine="true" android:text="Schlossplatz" android:textColor="@color/widget_text" android:textSize="12sp" />
+                    android:singleLine="true" android:text="Schlossplatz" android:textColor="@color/tile_text" android:textSize="12sp" />
             </LinearLayout>
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="1dp" android:orientation="horizontal">
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:includeFontPadding="false"
-                    android:text="9" android:textColor="@color/widget_text" android:textSize="24sp" android:textStyle="bold" />
+                    android:text="9" android:textColor="@color/tile_text" android:textSize="24sp" android:textStyle="bold" />
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="2dp"
-                    android:text="@string/min_unit" android:textColor="@color/jasmine" android:textSize="12sp" android:textStyle="bold" />
+                    android:text="@string/min_unit" android:textColor="@color/tile_accent" android:textSize="12sp" android:textStyle="bold" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="4dp" android:layout_weight="1"
-                    android:gravity="end" android:singleLine="true" android:text="then 19m" android:textColor="@color/widget_text_secondary" android:textSize="11sp" />
+                    android:gravity="end" android:singleLine="true" android:text="then 19m" android:textColor="@color/tile_text_secondary" android:textSize="11sp" />
             </LinearLayout>
         </LinearLayout>
         <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_margin="3dp"
@@ -113,17 +113,17 @@
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
                 <TextView android:layout_width="wrap_content" android:layout_height="18dp" android:background="@drawable/badge" android:gravity="center"
                     android:minWidth="30dp" android:paddingStart="4dp" android:paddingEnd="4dp" android:text="56"
-                    android:textColor="@color/ink_black" android:textSize="11sp" android:textStyle="bold" />
+                    android:textColor="@color/badge_text" android:textSize="11sp" android:textStyle="bold" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="6dp" android:layout_weight="1"
-                    android:singleLine="true" android:text="Rosensteinbr." android:textColor="@color/widget_text" android:textSize="12sp" />
+                    android:singleLine="true" android:text="Rosensteinbr." android:textColor="@color/tile_text" android:textSize="12sp" />
             </LinearLayout>
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="1dp" android:orientation="horizontal">
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:includeFontPadding="false"
-                    android:text="15" android:textColor="@color/widget_text" android:textSize="24sp" android:textStyle="bold" />
+                    android:text="15" android:textColor="@color/tile_text" android:textSize="24sp" android:textStyle="bold" />
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="2dp"
-                    android:text="@string/min_unit" android:textColor="@color/jasmine" android:textSize="12sp" android:textStyle="bold" />
+                    android:text="@string/min_unit" android:textColor="@color/tile_accent" android:textSize="12sp" android:textStyle="bold" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="4dp" android:layout_weight="1"
-                    android:gravity="end" android:singleLine="true" android:text="" android:textColor="@color/widget_text_secondary" android:textSize="11sp" />
+                    android:gravity="end" android:singleLine="true" android:text="" android:textColor="@color/tile_text_secondary" android:textSize="11sp" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
