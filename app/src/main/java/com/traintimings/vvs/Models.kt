@@ -81,18 +81,44 @@ data class StopSelection(val stopId: String, val stopName: String, val lines: Li
     }
 }
 
-/** What a single widget instance shows: lines from one or more stops. */
-data class WidgetConfig(val stops: List<StopSelection>) {
+/**
+ * One row in the widget's tile order: a line + direction at a stop, or a whole stop when
+ * [line] is null ("all lines").
+ */
+data class TileKey(val stopId: String, val line: LineDirection?) {
+    fun encode(): String = "$stopId|${line?.line ?: "*"}|${line?.destination ?: "*"}"
+
+    companion object {
+        fun decode(s: String): TileKey? {
+            val parts = s.split("|")
+            if (parts.size != 3) return null
+            val line = if (parts[1] == "*" && parts[2] == "*") null else LineDirection(parts[1], parts[2])
+            return TileKey(parts[0], line)
+        }
+    }
+}
+
+/**
+ * What a single widget instance shows: lines from one or more stops.
+ * [order] is the user's tile order; when empty, tiles fall back to the soonest-first default.
+ */
+data class WidgetConfig(val stops: List<StopSelection>, val order: List<TileKey> = emptyList()) {
 
     fun toJson(): JSONObject = JSONObject()
         .put("stops", JSONArray().apply { stops.forEach { put(it.toJson()) } })
+        .put("order", JSONArray().apply { order.forEach { put(it.encode()) } })
 
     companion object {
         fun fromJson(o: JSONObject): WidgetConfig {
             val arr = o.optJSONArray("stops")
                 // Widgets set up before multi-stop support stored a single stop at the top level.
                 ?: return WidgetConfig(listOf(StopSelection.fromJson(o)))
-            return WidgetConfig((0 until arr.length()).map { StopSelection.fromJson(arr.getJSONObject(it)) })
+            val order = o.optJSONArray("order")
+            return WidgetConfig(
+                stops = (0 until arr.length()).map { StopSelection.fromJson(arr.getJSONObject(it)) },
+                order = if (order == null) emptyList()
+                else (0 until order.length()).mapNotNull { TileKey.decode(order.optString(it)) },
+            )
         }
     }
 }

@@ -12,9 +12,11 @@ import android.os.Handler
 import android.os.Looper
 import android.view.KeyEvent
 import android.view.View
+import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.ArrayAdapter
+import android.widget.BaseAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ListView
@@ -39,8 +41,10 @@ class ConfigActivity : Activity() {
     private var mode = Mode.OVERVIEW
     private var requestToken = 0
 
-    /** The stops chosen so far, in the order they were added. */
+    /** The stops chosen so far. */
     private val picked = mutableListOf<StopSelection>()
+    /** The widget's tile order: one row per chosen line, or per stop showing all its lines. */
+    private val order = mutableListOf<TileKey>()
     /** Departures downloaded while picking lines, reused to fill the widget straight away. */
     private val fetched = mutableMapOf<String, DepartureCache>()
 
@@ -80,20 +84,26 @@ class ConfigActivity : Activity() {
         }
         list.setOnItemClickListener { _, _, position, _ ->
             when (mode) {
-                Mode.OVERVIEW -> picked.getOrNull(position)?.let { pickStop(Stop(it.stopId, it.stopName)) }
+                Mode.OVERVIEW -> order.getOrNull(position)?.let { key ->
+                    picked.find { it.stopId == key.stopId }?.let { pickStop(Stop(it.stopId, it.stopName)) }
+                }
                 Mode.STOPS -> searchResults.getOrNull(position)?.let { pickStop(it) }
                 Mode.LINES -> Unit
             }
         }
         list.setOnItemLongClickListener { _, _, position, _ ->
-            if (mode == Mode.OVERVIEW) picked.getOrNull(position)?.let { confirmRemove(it) }
+            if (mode == Mode.OVERVIEW) order.getOrNull(position)?.let { confirmRemove(it) }
             mode == Mode.OVERVIEW
         }
         save.setOnClickListener { if (mode == Mode.LINES) commitLines() else save() }
         back.setOnClickListener { goBack() }
         addStop.setOnClickListener { showSearch() }
 
-        if (hasWidget()) WidgetStore.config(this, widgetId)?.let { picked += it.stops }
+        if (hasWidget()) WidgetStore.config(this, widgetId)?.let {
+            picked += it.stops
+            order += it.order
+        }
+        syncOrder()
         if (picked.isEmpty()) showSearch() else showOverview()
     }
 
@@ -130,11 +140,48 @@ class ConfigActivity : Activity() {
         title.setText(R.string.your_stops)
         status.setText(R.string.your_stops_hint)
         list.choiceMode = ListView.CHOICE_MODE_NONE
-        val rows = picked.map { sel ->
-            val lines = if (sel.lines.isEmpty()) getString(R.string.all_lines) else sel.lines.joinToString("\n") { it.label }
-            "${sel.stopName}\n$lines"
+        list.adapter = OrderAdapter()
+    }
+
+    private fun stopName(stopId: String) = picked.find { it.stopId == stopId }?.stopName.orEmpty()
+
+    private fun move(from: Int, to: Int) {
+        if (to !in order.indices) return
+        order.add(to, order.removeAt(from))
+        (list.adapter as? OrderAdapter)?.notifyDataSetChanged()
+    }
+
+    /** Keeps [order] in step with [picked]: drops rows that no longer exist, appends new ones at the end. */
+    private fun syncOrder() {
+        val wanted = picked.flatMap { sel ->
+            if (sel.lines.isEmpty()) listOf(TileKey(sel.stopId, null)) else sel.lines.map { TileKey(sel.stopId, it) }
         }
-        list.adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, rows)
+        order.retainAll(wanted.toSet())
+        wanted.filterNot { it in order }.forEach { order += it }
+    }
+
+    private inner class OrderAdapter : BaseAdapter() {
+        override fun getCount() = order.size
+        override fun getItem(position: Int) = order[position]
+        override fun getItemId(position: Int) = position.toLong()
+
+        override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+            val v = convertView ?: layoutInflater.inflate(R.layout.item_tile_entry, parent, false)
+            val key = order[position]
+            v.findViewById<TextView>(R.id.position).text = (position + 1).toString()
+            v.findViewById<TextView>(R.id.line).text =
+                key.line?.label ?: getString(R.string.all_lines)
+            v.findViewById<TextView>(R.id.stop).text = stopName(key.stopId)
+            v.findViewById<Button>(R.id.up).apply {
+                isEnabled = position > 0
+                setOnClickListener { move(position, position - 1) }
+            }
+            v.findViewById<Button>(R.id.down).apply {
+                isEnabled = position < order.size - 1
+                setOnClickListener { move(position, position + 1) }
+            }
+            return v
+        }
     }
 
     private fun showSearch() {
@@ -230,16 +277,25 @@ class ConfigActivity : Activity() {
         val selection = StopSelection(stop.id, stop.name, lines)
         val index = picked.indexOfFirst { it.stopId == stop.id }
         if (index >= 0) picked[index] = selection else picked += selection
+        syncOrder()
         query.text.clear()
         searchResults = emptyList()
         showOverview()
     }
 
-    private fun confirmRemove(selection: StopSelection) {
+    /** Removes one row: a single line, or the whole stop when it was the stop's last line. */
+    private fun confirmRemove(key: TileKey) {
+        val label = key.line?.let { "${it.label} (${stopName(key.stopId)})" } ?: stopName(key.stopId)
         AlertDialog.Builder(this)
-            .setMessage(getString(R.string.remove_stop, selection.stopName))
+            .setMessage(getString(R.string.remove_stop, label))
             .setPositiveButton(R.string.remove) { _, _ ->
-                picked.remove(selection)
+                val index = picked.indexOfFirst { it.stopId == key.stopId }
+                if (index >= 0) {
+                    val remaining = picked[index].lines - listOfNotNull(key.line).toSet()
+                    if (key.line == null || remaining.isEmpty()) picked.removeAt(index)
+                    else picked[index] = picked[index].copy(lines = remaining)
+                }
+                syncOrder()
                 showOverview()
             }
             .setNegativeButton(android.R.string.cancel, null)
@@ -248,7 +304,7 @@ class ConfigActivity : Activity() {
 
     private fun save() {
         if (picked.isEmpty()) return
-        val config = WidgetConfig(picked.toList())
+        val config = WidgetConfig(picked.toList(), order.toList())
         fetched.forEach { (stopId, cache) -> WidgetStore.saveStopCache(this, stopId, cache) }
 
         if (hasWidget()) {

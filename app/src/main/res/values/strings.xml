@@ -34,7 +34,9 @@
     <string name="done">Done</string>
     <string name="add_stop">+ Add stop</string>
     <string name="your_stops">Your stops</string>
-    <string name="your_stops_hint">Each tile on the widget is one line and direction, from any of these stops. Up to 6 show at once, soonest first. Tap a stop to change its lines, long-press to remove it.</string>
+    <string name="your_stops_hint">The widget shows these in this order (the first 6 with a train coming). Use ▲ ▼ to reorder, tap a row to change that stop\'s lines, long-press to remove it.</string>
+    <string name="move_up">Move up</string>
+    <string name="move_down">Move down</string>
     <string name="all_lines">All lines</string>
     <string name="remove_stop">Remove %1$s?</string>
     <string name="remove">Remove</string>

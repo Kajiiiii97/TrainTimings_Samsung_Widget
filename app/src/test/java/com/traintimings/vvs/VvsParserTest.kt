@@ -97,6 +97,10 @@ class VvsParserTest {
                 StopSelection("5002260", "Pragsattel", listOf(LineDirection("U12", "Dürrlewang"))),
                 StopSelection("5000275", "Löwentor", emptyList()),
             ),
+            order = listOf(
+                TileKey("5000275", null),
+                TileKey("5002260", LineDirection("U12", "Dürrlewang")),
+            ),
         )
         assertEquals(config, WidgetConfig.fromJson(JSONObject(config.toJson().toString())))
 

@@ -100,4 +100,23 @@ class CountdownTest {
         assertEquals(setOf("pragsattel", "loewentor"), tiles.map { it.next.stopId }.toSet())
         assertEquals(13, Countdown.minutesUntil(tiles.first { it.next.stopId == "pragsattel" }.after!!.time, now))
     }
+
+    @Test
+    fun customOrderWinsOverSoonestAndKeepsWholeStopsTogether() {
+        val departures = listOf(
+            dep("U12", "Dürrlewang", 2, stop = "a"),
+            dep("U14", "Vaihingen", 9, stop = "b"),
+            dep("56", "Münster", 1, stop = "c"),
+            dep("42", "Schlossplatz", 3, stop = "c"),
+            dep("S1", "Herrenberg", 30, stop = "d"),
+        )
+        val order = listOf(
+            TileKey("b", LineDirection("U14", "Vaihingen")),
+            TileKey("c", null), // all lines at stop c, kept together in line order
+            TileKey("a", LineDirection("U12", "Dürrlewang")),
+        )
+        val tiles = Countdown.tiles(departures, now, limit = 4, order = order)
+        // S1 at stop d isn't in the order, so it goes last and falls off the 4-tile limit.
+        assertEquals(listOf("U14", "42", "56", "U12"), tiles.map { it.next.line })
+    }
 }

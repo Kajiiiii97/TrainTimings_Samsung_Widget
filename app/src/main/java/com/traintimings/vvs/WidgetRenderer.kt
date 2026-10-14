@@ -43,7 +43,7 @@ object WidgetRenderer {
         val caches = config.stops.map { it to WidgetStore.stopCache(ctx, it.stopId) }
         val departures = caches.flatMap { (sel, cache) -> cache?.departures.orEmpty().filter(sel::matches) }
         val (columns, maxRows) = gridSize(mgr, id)
-        val tiles = Countdown.tiles(departures, now, minOf(MAX_TILES, columns * maxRows))
+        val tiles = Countdown.tiles(departures, now, minOf(MAX_TILES, columns * maxRows), config.order)
 
         val loaded = caches.mapNotNull { it.second }
         val fetchedAt = loaded.mapNotNull { it.fetchedAt }.minOrNull()

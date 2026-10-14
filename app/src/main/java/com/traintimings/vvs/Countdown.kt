@@ -19,13 +19,30 @@ object Countdown {
             .sortedBy { it.next.time }
 
     /**
-     * The tiles to show: the [limit] soonest lines, laid out in a fixed line order
-     * so a tile doesn't jump around the grid every time a train leaves.
+     * The tiles to show.
+     *
+     * With a user [order]: tiles follow it (a whole-stop entry keeps its lines together in line
+     * order) and the first [limit] with a train coming are shown.
+     * Without one: the [limit] soonest lines, laid out in a fixed line order so a tile doesn't jump
+     * around the grid every time a train leaves.
      */
-    fun tiles(departures: List<Departure>, now: Instant, limit: Int): List<UpcomingLine> =
-        group(departures, now)
-            .take(limit)
-            .sortedWith(LineOrder.comparator({ it.next.lineDirection }, { it.next.productClass }))
+    fun tiles(
+        departures: List<Departure>,
+        now: Instant,
+        limit: Int,
+        order: List<TileKey> = emptyList(),
+    ): List<UpcomingLine> {
+        val byLine = LineOrder.comparator<UpcomingLine>({ it.next.lineDirection }, { it.next.productClass })
+        val groups = group(departures, now)
+        if (order.isEmpty()) return groups.take(limit).sortedWith(byLine)
+
+        val position = order.withIndex().associate { (i, key) -> key to i }
+        fun rank(t: UpcomingLine): Int =
+            position[TileKey(t.next.stopId, t.next.lineDirection)]
+                ?: position[TileKey(t.next.stopId, null)]
+                ?: Int.MAX_VALUE
+        return groups.sortedWith(compareBy<UpcomingLine> { rank(it) }.then(byLine)).take(limit)
+    }
 
     /** Whole minutes until [time], rounded down, never negative. */
     fun minutesUntil(time: Instant, now: Instant): Long =
