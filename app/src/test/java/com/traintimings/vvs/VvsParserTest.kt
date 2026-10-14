@@ -101,6 +101,10 @@ class VvsParserTest {
                 TileKey("5000275", null),
                 TileKey("5002260", LineDirection("U12", "Dürrlewang")),
             ),
+            highlight = mapOf(
+                TileKey("5000275", null) to 5,
+                TileKey("5002260", LineDirection("U12", "Dürrlewang")) to WidgetConfig.HIGHLIGHT_OFF,
+            ),
         )
         assertEquals(config, WidgetConfig.fromJson(JSONObject(config.toJson().toString())))
 
@@ -117,5 +121,17 @@ class VvsParserTest {
             WidgetConfig(listOf(StopSelection("5002260", "Pragsattel", listOf(LineDirection("U12", "Dürrlewang"))))),
             WidgetConfig.fromJson(legacy),
         )
+    }
+
+    @Test
+    fun highlightThresholdFallsBackFromLineToStopToDefault() {
+        val u12 = LineDirection("U12", "Dürrlewang")
+        val config = WidgetConfig(
+            stops = emptyList(),
+            highlight = mapOf(TileKey("a", u12) to 3, TileKey("b", null) to 7),
+        )
+        assertEquals(3, config.highlightFor("a", u12))
+        assertEquals(7, config.highlightFor("b", u12))
+        assertEquals(WidgetConfig.DEFAULT_HIGHLIGHT, config.highlightFor("c", u12))
     }
 }

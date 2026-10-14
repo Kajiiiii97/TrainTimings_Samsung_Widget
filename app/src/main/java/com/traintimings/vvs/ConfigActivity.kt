@@ -34,6 +34,10 @@ class ConfigActivity : Activity() {
 
     private enum class Mode { OVERVIEW, STOPS, LINES }
 
+    private companion object {
+        val HIGHLIGHT_CHOICES = listOf(WidgetConfig.HIGHLIGHT_OFF, 0, 1, 2, 3, 4, 5, 7, 10, 15)
+    }
+
     private val io = Executors.newSingleThreadExecutor()
     private val main = Handler(Looper.getMainLooper())
 
@@ -45,6 +49,8 @@ class ConfigActivity : Activity() {
     private val picked = mutableListOf<StopSelection>()
     /** The widget's tile order: one row per chosen line, or per stop showing all its lines. */
     private val order = mutableListOf<TileKey>()
+    /** Per-row highlight threshold in minutes; rows without an entry use the default. */
+    private val highlight = mutableMapOf<TileKey, Int>()
     /** Departures downloaded while picking lines, reused to fill the widget straight away. */
     private val fetched = mutableMapOf<String, DepartureCache>()
 
@@ -102,6 +108,7 @@ class ConfigActivity : Activity() {
         if (hasWidget()) WidgetStore.config(this, widgetId)?.let {
             picked += it.stops
             order += it.order
+            highlight += it.highlight
         }
         syncOrder()
         if (picked.isEmpty()) showSearch() else showOverview()
@@ -172,6 +179,10 @@ class ConfigActivity : Activity() {
             v.findViewById<TextView>(R.id.line).text =
                 key.line?.label ?: getString(R.string.all_lines)
             v.findViewById<TextView>(R.id.stop).text = stopName(key.stopId)
+            v.findViewById<Button>(R.id.highlight).apply {
+                text = highlightChip(highlight[key] ?: WidgetConfig.DEFAULT_HIGHLIGHT)
+                setOnClickListener { chooseHighlight(key) }
+            }
             v.findViewById<Button>(R.id.up).apply {
                 isEnabled = position > 0
                 setOnClickListener { move(position, position - 1) }
@@ -182,6 +193,33 @@ class ConfigActivity : Activity() {
             }
             return v
         }
+    }
+
+    private fun highlightChip(minutes: Int): String = when (minutes) {
+        WidgetConfig.HIGHLIGHT_OFF -> getString(R.string.highlight_chip_off)
+        0 -> getString(R.string.highlight_chip_now)
+        else -> getString(R.string.highlight_chip, minutes)
+    }
+
+    private fun chooseHighlight(key: TileKey) {
+        val values = HIGHLIGHT_CHOICES
+        val labels = values.map {
+            when (it) {
+                WidgetConfig.HIGHLIGHT_OFF -> getString(R.string.highlight_off)
+                0 -> getString(R.string.highlight_now)
+                else -> getString(R.string.highlight_within, it)
+            }
+        }.toTypedArray()
+        val current = values.indexOf(highlight[key] ?: WidgetConfig.DEFAULT_HIGHLIGHT)
+        AlertDialog.Builder(this)
+            .setTitle(R.string.highlight_title)
+            .setSingleChoiceItems(labels, current) { dialog, which ->
+                highlight[key] = values[which]
+                (list.adapter as? OrderAdapter)?.notifyDataSetChanged()
+                dialog.dismiss()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     private fun showSearch() {
@@ -304,7 +342,7 @@ class ConfigActivity : Activity() {
 
     private fun save() {
         if (picked.isEmpty()) return
-        val config = WidgetConfig(picked.toList(), order.toList())
+        val config = WidgetConfig(picked.toList(), order.toList(), highlight.filterKeys { it in order })
         fetched.forEach { (stopId, cache) -> WidgetStore.saveStopCache(this, stopId, cache) }
 
         if (hasWidget()) {

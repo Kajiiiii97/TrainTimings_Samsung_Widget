@@ -63,7 +63,9 @@ object WidgetRenderer {
             // Fill the grid row by row; pad the last row so tiles keep the same width.
             tiles.chunked(columns).forEachIndexed { r, chunk ->
                 val row = RemoteViews(ctx.packageName, R.layout.widget_grid_row)
-                chunk.forEachIndexed { c, line -> row.addView(R.id.grid_row, tile(ctx, line, r * columns + c, now, fmt)) }
+                chunk.forEachIndexed { c, line ->
+                    row.addView(R.id.grid_row, tile(ctx, line, r * columns + c, config, now, fmt))
+                }
                 repeat(columns - chunk.size) {
                     val filler = RemoteViews(ctx.packageName, R.layout.widget_tile)
                     filler.setViewVisibility(R.id.tile_root, View.INVISIBLE)
@@ -82,7 +84,14 @@ object WidgetRenderer {
         mgr.updateAppWidget(id, views)
     }
 
-    private fun tile(ctx: Context, line: UpcomingLine, index: Int, now: Instant, fmt: DateTimeFormatter): RemoteViews {
+    private fun tile(
+        ctx: Context,
+        line: UpcomingLine,
+        index: Int,
+        config: WidgetConfig,
+        now: Instant,
+        fmt: DateTimeFormatter,
+    ): RemoteViews {
         val d = line.next
         val t = RemoteViews(ctx.packageName, R.layout.widget_tile)
         // Cycle the pop colour (offset shadow + line badge) so neighbouring tiles differ.
@@ -92,9 +101,9 @@ object WidgetRenderer {
         t.setTextViewText(R.id.badge_text, d.line)
         t.setTextViewText(R.id.destination, d.destination)
 
-        // Big countdown for the next train; the tile turns solid pink when it's about to leave.
+        // Big countdown for the next train; the tile turns solid pink once it's within the row's highlight time.
         val minutes = Countdown.minutesUntil(d.time, now)
-        val soon = minutes <= 1
+        val soon = minutes <= config.highlightFor(d.stopId, d.lineDirection)
         when {
             minutes == 0L -> {
                 t.setTextViewText(R.id.countdown, ctx.getString(R.string.now))

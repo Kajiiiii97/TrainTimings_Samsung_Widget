@@ -33,7 +33,8 @@ JSON so stops can be searched by name.
 3. Add more stops the same way. One widget can mix lines from any number of stops, like the LCD
    display did.
 4. Put the tiles in the order you want with ▲ ▼. The widget shows them in that order (the first 6 with
-   a train coming). Tap a row to change that stop's lines, long-press to remove it.
+   a train coming). Tap ✦ on a row to choose when that tile lights up (never, leaving now, or within
+   1 to 15 minutes; default 1). Tap a row to change that stop's lines, long-press to remove it.
 5. Save. Tap the gear on the widget any time to change it.
 
 ## How it behaves
@@ -41,7 +42,7 @@ JSON so stops can be searched by name.
 - A grid of up to 6 tiles, one per line + direction: a big countdown to the next train and a smaller
   "then X min" for the one after. Countdowns include real-time delays (the red `+2` chip); cancelled
   trips are skipped; trains more than an hour away show their clock time. A tile turns solid pink when its
-  train is leaving within a minute. Tiles keep the order you set, so they don't jump around.
+  train is within that row's highlight time (1 minute unless you change it). Tiles keep the order you set, so they don't jump around.
 - Grid size follows the widget size: 2 columns (3 on very wide widgets), up to 3 rows. The default
   4×3 size fits all 6; at 4×2 you get 4.
 - Countdowns tick over every minute while the screen is on, using the cached data (no extra downloads).

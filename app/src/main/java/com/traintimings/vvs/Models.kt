@@ -101,12 +101,22 @@ data class TileKey(val stopId: String, val line: LineDirection?) {
 /**
  * What a single widget instance shows: lines from one or more stops.
  * [order] is the user's tile order; when empty, tiles fall back to the soonest-first default.
+ * [highlight] is, per row, how many minutes before departure the tile lights up ([HIGHLIGHT_OFF] = never).
  */
-data class WidgetConfig(val stops: List<StopSelection>, val order: List<TileKey> = emptyList()) {
+data class WidgetConfig(
+    val stops: List<StopSelection>,
+    val order: List<TileKey> = emptyList(),
+    val highlight: Map<TileKey, Int> = emptyMap(),
+) {
+
+    /** Highlight threshold for a tile: its own row's setting, else its stop's "all lines" row, else the default. */
+    fun highlightFor(stopId: String, line: LineDirection): Int =
+        highlight[TileKey(stopId, line)] ?: highlight[TileKey(stopId, null)] ?: DEFAULT_HIGHLIGHT
 
     fun toJson(): JSONObject = JSONObject()
         .put("stops", JSONArray().apply { stops.forEach { put(it.toJson()) } })
         .put("order", JSONArray().apply { order.forEach { put(it.encode()) } })
+        .put("highlight", JSONObject().apply { highlight.forEach { (k, v) -> put(k.encode(), v) } })
 
     companion object {
         fun fromJson(o: JSONObject): WidgetConfig {
@@ -114,12 +124,21 @@ data class WidgetConfig(val stops: List<StopSelection>, val order: List<TileKey>
                 // Widgets set up before multi-stop support stored a single stop at the top level.
                 ?: return WidgetConfig(listOf(StopSelection.fromJson(o)))
             val order = o.optJSONArray("order")
+            val highlight = o.optJSONObject("highlight")
             return WidgetConfig(
                 stops = (0 until arr.length()).map { StopSelection.fromJson(arr.getJSONObject(it)) },
                 order = if (order == null) emptyList()
                 else (0 until order.length()).mapNotNull { TileKey.decode(order.optString(it)) },
+                highlight = highlight?.keys()?.asSequence()
+                    ?.mapNotNull { k -> TileKey.decode(k)?.let { it to highlight.optInt(k, DEFAULT_HIGHLIGHT) } }
+                    ?.toMap()
+                    .orEmpty(),
             )
         }
+
+        /** Light up a tile when its train leaves within this many minutes. */
+        const val DEFAULT_HIGHLIGHT = 1
+        const val HIGHLIGHT_OFF = -1
     }
 }
 
