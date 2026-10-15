@@ -14,7 +14,7 @@ class TrainWidgetProvider : AppWidgetProvider() {
         ids.forEach { WidgetRenderer.render(ctx, mgr, it) }
         Scheduler.ensurePeriodic(ctx)
         Scheduler.refreshNow(ctx)
-        MinuteTicker.schedule(ctx)
+        LiveTicker.schedule(ctx)
     }
 
     override fun onAppWidgetOptionsChanged(ctx: Context, mgr: AppWidgetManager, id: Int, options: Bundle) {
@@ -28,7 +28,7 @@ class TrainWidgetProvider : AppWidgetProvider() {
 
     override fun onDisabled(ctx: Context) {
         Scheduler.cancelAll(ctx)
-        MinuteTicker.cancel(ctx)
+        LiveTicker.cancel(ctx)
     }
 
     override fun onReceive(ctx: Context, intent: Intent) {
@@ -45,10 +45,11 @@ class TrainWidgetProvider : AppWidgetProvider() {
                 if (ids.isEmpty()) return
                 val mgr = AppWidgetManager.getInstance(ctx)
                 ids.forEach { WidgetRenderer.render(ctx, mgr, it) }
-                MinuteTicker.schedule(ctx)
-                // The minute tick keeps running even when background jobs are held back, so it
-                // fetches fresh data itself once the cache gets old or is about to run out.
-                if (Refresher.needsRefresh(ctx)) refreshInBackground(ctx)
+                LiveTicker.schedule(ctx)
+                // The live tick keeps running even when background jobs are held back, so it fetches
+                // fresh real-time data itself: a quick fetch every 30 s, a full one every 10 min.
+                val due = Refresher.due(ctx)
+                if (due != Refresher.Kind.NONE) refreshInBackground(ctx, due)
             }
             ACTION_PINNED -> {
                 // Widget added from inside the app via requestPinAppWidget: apply the config chosen there.
@@ -58,7 +59,7 @@ class TrainWidgetProvider : AppWidgetProvider() {
                     WidgetStore.saveConfig(ctx, id, WidgetConfig.fromJson(JSONObject(json)))
                     WidgetRenderer.render(ctx, AppWidgetManager.getInstance(ctx), id)
                     Scheduler.ensurePeriodic(ctx)
-                    MinuteTicker.schedule(ctx)
+                    LiveTicker.schedule(ctx)
                     refreshInBackground(ctx)
                 }
             }
@@ -67,13 +68,13 @@ class TrainWidgetProvider : AppWidgetProvider() {
     }
 
     /** Fetch right away on a background thread, keeping this receiver alive until it's done. */
-    private fun refreshInBackground(ctx: Context) {
+    private fun refreshInBackground(ctx: Context, kind: Refresher.Kind = Refresher.Kind.FULL) {
         val app = ctx.applicationContext
         val pending = goAsync()
         Thread {
             try {
                 // If the direct fetch fails, leave a job queued to retry once there's network.
-                if (Refresher.refreshAll(app, keepLoadingOnFailure = false)) Scheduler.refreshNow(app)
+                if (Refresher.refreshAll(app, keepLoadingOnFailure = false, kind = kind)) Scheduler.refreshNow(app)
             } catch (e: Exception) {
                 Scheduler.refreshNow(app)
             } finally {

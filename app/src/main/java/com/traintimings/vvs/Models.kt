@@ -180,10 +180,19 @@ data class WidgetConfig(
     }
 }
 
-/** Last fetched departures for a stop, kept so widgets can roll forward while offline. */
-data class DepartureCache(val fetchedAt: Instant?, val departures: List<Departure>, val error: String?) {
+/**
+ * Last fetched departures for a stop, kept so widgets can roll forward while offline.
+ * [fetchedAt] is the latest fetch of any kind; [fullAt] the latest full (far-ahead) fetch.
+ */
+data class DepartureCache(
+    val fetchedAt: Instant?,
+    val departures: List<Departure>,
+    val error: String?,
+    val fullAt: Instant? = fetchedAt,
+) {
     fun toJson(): JSONObject = JSONObject()
         .put("fetchedAt", fetchedAt?.toEpochMilli() ?: -1L)
+        .put("fullAt", fullAt?.toEpochMilli() ?: -1L)
         .put("error", error ?: "")
         .put("departures", JSONArray().apply { departures.forEach { put(it.toJson()) } })
 
@@ -191,10 +200,12 @@ data class DepartureCache(val fetchedAt: Instant?, val departures: List<Departur
         fun fromJson(o: JSONObject): DepartureCache {
             val arr = o.optJSONArray("departures") ?: JSONArray()
             val fetched = o.optLong("fetchedAt", -1L)
+            val full = o.optLong("fullAt", fetched)
             return DepartureCache(
                 fetchedAt = if (fetched >= 0) Instant.ofEpochMilli(fetched) else null,
                 departures = (0 until arr.length()).map { Departure.fromJson(arr.getJSONObject(it)) },
                 error = o.optString("error", "").ifBlank { null },
+                fullAt = if (full >= 0) Instant.ofEpochMilli(full) else null,
             )
         }
     }

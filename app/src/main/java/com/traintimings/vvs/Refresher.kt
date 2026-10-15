@@ -10,38 +10,62 @@ import java.util.concurrent.TimeUnit
 /**
  * Downloads fresh departures for every stop any widget uses, then redraws and reschedules.
  *
- * Called from the background job and, more importantly, straight from the minute tick and from
- * taps: Samsung's battery manager often holds background jobs back for a long time, and without
- * fresh data the widget slowly empties as each cached trip leaves.
+ * While the screen is on, [LiveTicker] calls in every 30 seconds:
+ * - a quick fetch (just the next few departures) keeps delays and cancellations live and is light
+ *   on data; it's merged into the cache, keeping the later trips from the last full fetch;
+ * - a full fetch (looking well ahead) runs every 10 minutes, or sooner if the cache is running out,
+ *   so quieter lines always have their next trips.
+ * The background job, taps and new widgets always do a full fetch.
  */
 object Refresher {
-    /** Data older than this is refreshed on the next minute tick (only ticks while the screen is on). */
-    private val STALE_AFTER: Duration = Duration.ofMinutes(4)
-    /** Don't start fetches closer together than this. */
-    private val MIN_GAP: Duration = Duration.ofSeconds(50)
-    /** Refresh early if a stop's cached departures run out within this window. */
+
+    enum class Kind { NONE, QUICK, FULL }
+
+    private val QUICK_EVERY: Duration = Duration.ofSeconds(25)
+    private val FULL_EVERY: Duration = Duration.ofMinutes(10)
+    /** Full refresh early if a stop's cached departures run out within this window. */
     private val HORIZON: Duration = Duration.ofMinutes(20)
+    /** Don't start fetches closer together than this. */
+    private val MIN_GAP: Duration = Duration.ofSeconds(20)
+
+    private const val QUICK_LIMIT = 20
+    private const val FULL_LIMIT_PICKED_LINES = 150
+    private const val FULL_LIMIT_ALL_LINES = 60
 
     private val lock = Any()
 
-    /** Whether the cached data is old or running out, so the minute tick should fetch. */
-    fun needsRefresh(ctx: Context): Boolean {
+    /** What the live tick should fetch now, if anything. */
+    fun due(ctx: Context): Kind {
         val stopIds = TrainWidgetProvider.allIds(ctx)
             .flatMap { WidgetStore.config(ctx, it)?.stops.orEmpty() }
             .map { it.stopId }
             .toSet()
-        if (stopIds.isEmpty()) return false
+        if (stopIds.isEmpty()) return Kind.NONE
         val now = Instant.now()
-        if (Duration.between(WidgetStore.lastRefreshAttempt(ctx), now) < MIN_GAP) return false
-        return stopIds.any { stopId ->
-            val cache = WidgetStore.stopCache(ctx, stopId)
-            val fetchedAt = cache?.fetchedAt
-            when {
-                cache == null || fetchedAt == null -> true
-                Duration.between(fetchedAt, now) > STALE_AFTER -> true
-                else -> cache.departures.maxOfOrNull { it.time }?.isBefore(now.plus(HORIZON)) ?: true
-            }
+        if (Duration.between(WidgetStore.lastRefreshAttempt(ctx), now) < MIN_GAP) return Kind.NONE
+        return stopIds.map { due(WidgetStore.stopCache(ctx, it), now) }.maxByOrNull { it.ordinal } ?: Kind.NONE
+    }
+
+    internal fun due(cache: DepartureCache?, now: Instant): Kind {
+        if (cache == null) return Kind.FULL
+        val fetchedAt = cache.fetchedAt ?: return Kind.FULL
+        val fullAt = cache.fullAt ?: return Kind.FULL
+        val lastTrip = cache.departures.maxOfOrNull { it.time } ?: return Kind.FULL
+        return when {
+            Duration.between(fullAt, now) > FULL_EVERY -> Kind.FULL
+            lastTrip.isBefore(now.plus(HORIZON)) -> Kind.FULL
+            Duration.between(fetchedAt, now) > QUICK_EVERY -> Kind.QUICK
+            else -> Kind.NONE
         }
+    }
+
+    /**
+     * Folds a quick fetch into the cached list: the quick fetch is the truth up to its last planned
+     * departure (so delays, cancellations and dropped trips update), later cached trips are kept.
+     */
+    internal fun merge(cached: List<Departure>, quick: List<Departure>): List<Departure> {
+        val cutoff = quick.maxOfOrNull { it.planned } ?: return cached
+        return (quick + cached.filter { it.planned.isAfter(cutoff) }).sortedBy { it.time }
     }
 
     /**
@@ -49,7 +73,7 @@ object Refresher {
      * With [keepLoadingOnFailure] a stop that has never loaded stays on "Loading…" instead of an error.
      * Returns true if any stop failed.
      */
-    fun refreshAll(ctx: Context, keepLoadingOnFailure: Boolean): Boolean = synchronized(lock) {
+    fun refreshAll(ctx: Context, keepLoadingOnFailure: Boolean, kind: Kind = Kind.FULL): Boolean = synchronized(lock) {
         WidgetStore.markRefreshAttempt(ctx, Instant.now())
         val mgr = AppWidgetManager.getInstance(ctx)
         val ids = TrainWidgetProvider.allIds(ctx).toList()
@@ -60,24 +84,35 @@ object Refresher {
         if (byStop.isNotEmpty()) {
             val pool = Executors.newFixedThreadPool(byStop.size.coerceAtMost(4))
             try {
-                // One request per stop, however many widgets use it. A stop where only some lines
-                // were picked fetches further ahead so quieter lines don't run out between refreshes.
-                val results = byStop.mapValues { (stopId, uses) ->
-                    val limit = if (uses.all { it.lines.isNotEmpty() }) 150 else 60
-                    pool.submit<List<Departure>> { VvsApi.departures(stopId, limit) }
-                }
-                for ((stopId, future) in results) {
-                    val result = runCatching { future.get(25, TimeUnit.SECONDS) }
-                    failed = failed || result.isFailure
+                // One request per stop, however many widgets use it.
+                val jobs = byStop.map { (stopId, uses) ->
                     val old = WidgetStore.stopCache(ctx, stopId)
+                    val full = kind == Kind.FULL || old?.fullAt == null
+                    // A stop where only some lines were picked looks further ahead on full fetches
+                    // so quieter lines don't run out between them.
+                    val limit = when {
+                        !full -> QUICK_LIMIT
+                        uses.all { it.lines.isNotEmpty() } -> FULL_LIMIT_PICKED_LINES
+                        else -> FULL_LIMIT_ALL_LINES
+                    }
+                    Job(stopId, old, full, pool.submit<List<Departure>> { VvsApi.departures(stopId, limit) })
+                }
+                for (job in jobs) {
+                    val result = runCatching { job.future.get(25, TimeUnit.SECONDS) }
+                    failed = failed || result.isFailure
+                    val old = job.old
+                    val now = Instant.now()
                     val cache = result.fold(
-                        onSuccess = { all -> DepartureCache(Instant.now(), all, null) },
+                        onSuccess = { fresh ->
+                            if (job.full) DepartureCache(now, fresh, null, fullAt = now)
+                            else DepartureCache(now, merge(old?.departures.orEmpty(), fresh), null, fullAt = old?.fullAt)
+                        },
                         onFailure = { e ->
                             if (old == null && keepLoadingOnFailure) null
-                            else DepartureCache(old?.fetchedAt, old?.departures.orEmpty(), e.message ?: "Network error")
+                            else DepartureCache(old?.fetchedAt, old?.departures.orEmpty(), e.message ?: "Network error", old?.fullAt)
                         },
                     )
-                    if (cache != null) WidgetStore.saveStopCache(ctx, stopId, cache)
+                    if (cache != null) WidgetStore.saveStopCache(ctx, job.stopId, cache)
                 }
             } finally {
                 pool.shutdownNow()
@@ -94,7 +129,14 @@ object Refresher {
             .filter { it.isAfter(now) }
             .minOrNull()
         Scheduler.scheduleNext(ctx, next)
-        MinuteTicker.schedule(ctx)
+        LiveTicker.schedule(ctx)
         failed
     }
+
+    private class Job(
+        val stopId: String,
+        val old: DepartureCache?,
+        val full: Boolean,
+        val future: java.util.concurrent.Future<List<Departure>>,
+    )
 }

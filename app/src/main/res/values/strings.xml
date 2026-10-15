@@ -10,6 +10,7 @@
     <string name="widget_error">Couldn\'t reach VVS. Tap to retry.</string>
     <string name="widget_no_departures">No upcoming departures</string>
     <string name="widget_updated">Updated %1$s</string>
+    <string name="widget_live">● Live</string>
     <string name="widget_offline">Offline · data from %1$s</string>
     <string name="now">now</string>
     <string name="min_unit">min</string>

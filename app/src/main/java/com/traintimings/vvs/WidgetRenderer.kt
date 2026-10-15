@@ -8,6 +8,7 @@ import android.net.Uri
 import android.text.format.DateFormat
 import android.view.View
 import android.widget.RemoteViews
+import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -78,6 +79,8 @@ object WidgetRenderer {
         val footer = status ?: when {
             fetchedAt == null -> ""
             anyError -> ctx.getString(R.string.widget_offline, fmt.format(fetchedAt))
+            // Refreshed within the last couple of minutes: the live tick is keeping it current.
+            Duration.between(fetchedAt, now) < Duration.ofMinutes(2) -> ctx.getString(R.string.widget_live)
             else -> ctx.getString(R.string.widget_updated, fmt.format(fetchedAt))
         }
         views.setTextViewText(R.id.footer, footer)

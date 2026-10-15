@@ -47,8 +47,12 @@ JSON so stops can be searched by name.
   train is within that row's highlight time (1 minute unless you change it). Tiles keep the order you set, so they don't jump around.
 - Grid size follows the widget size: 2 columns (3 on very wide widgets), up to 3 rows. The default
   4×3 size fits all 6; at 4×2 you get 4.
-- Countdowns tick over every minute while the screen is on, using the cached data (no extra downloads).
-- Refreshes every 15 minutes, again right after each train leaves, and whenever you tap it.
+- Live while the screen is on: every 30 seconds the widget redraws and fetches the next ~20
+  departures per stop, so delays and cancellations show up straight away (footer shows ● Live).
+  Every 10 minutes, or when the cached trips run low, it does a bigger fetch that looks further
+  ahead so quieter lines don't run out. With the screen off it pauses.
+- In the background it also refreshes every 15 minutes and right after each train leaves, and
+  whenever you tap it.
 - Offline it keeps the last data and drops trains that have already left.
 - Style: playful geometric, with chunky outlines, solid offset shadows that cycle through the palette,
   pill badges and outline circle/diamond shapes. Colours come from

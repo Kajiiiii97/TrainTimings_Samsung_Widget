@@ -7,18 +7,20 @@ import android.content.Intent
 import android.os.Build
 
 /**
- * Redraws the widgets from cached data at the start of every minute so countdowns stay right.
+ * Wakes the widgets every 30 seconds while the screen is on: redraws the countdowns and, when the
+ * data is due, fetches fresh real-time times (see [Refresher]).
  * Uses a non-wakeup alarm, so it pauses while the screen is off and costs almost no battery.
  */
-object MinuteTicker {
+object LiveTicker {
+    private const val INTERVAL_MS = 30_000L
 
     fun schedule(ctx: Context) {
         val am = ctx.getSystemService(AlarmManager::class.java) ?: return
         val now = System.currentTimeMillis()
-        val nextMinute = now - now % 60_000 + 60_000 + 500
+        val nextTick = now - now % INTERVAL_MS + INTERVAL_MS + 500
         val pi = pendingIntent(ctx)
         val exact = Build.VERSION.SDK_INT < Build.VERSION_CODES.S || am.canScheduleExactAlarms()
-        if (exact) am.setExact(AlarmManager.RTC, nextMinute, pi) else am.set(AlarmManager.RTC, nextMinute, pi)
+        if (exact) am.setExact(AlarmManager.RTC, nextTick, pi) else am.set(AlarmManager.RTC, nextTick, pi)
     }
 
     fun cancel(ctx: Context) {
