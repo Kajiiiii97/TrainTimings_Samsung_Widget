@@ -60,8 +60,11 @@ JSON so stops can be searched by name.
   a near-black plum for outlines and text. All colours are roles in `res/values/colors.xml`, so a new
   theme is one file.
 
-Samsung tip: if the widget stops updating, go to Settings → Battery → Background usage limits and add
-Train Timings to **Never sleeping apps**.
+Samsung tip: Android, and Samsung's Power saving mode in particular, can block the internet for apps
+in the background, which a widget always is. Tapping the widget always works (it refreshes through a
+see-through screen in the foreground). For automatic updates, set Settings → Apps → Train Timings →
+Battery to **Unrestricted**, allow background data under Mobile data, and add it to **Never sleeping
+apps** (Settings → Battery → Background usage limits). If updates fail, the widget says so and why.
 
 ## Build locally
 

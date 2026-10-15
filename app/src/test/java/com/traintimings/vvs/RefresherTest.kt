@@ -52,4 +52,11 @@ class RefresherTest {
         // Cached trips run out within 20 minutes: look further ahead now.
         assertEquals(Refresher.Kind.FULL, Refresher.due(cache(30, 120, listOf(dep("54", 5))), now))
     }
+
+    @Test
+    fun turnsNetworkFailuresIntoShortReasons() {
+        assertEquals("no internet", Refresher.reason(java.net.UnknownHostException("www3.vvs.de")))
+        assertEquals("timed out", Refresher.reason(java.util.concurrent.ExecutionException(java.net.SocketTimeoutException())))
+        assertEquals("VVS returned HTTP 503", Refresher.reason(java.io.IOException("VVS returned HTTP 503")))
+    }
 }

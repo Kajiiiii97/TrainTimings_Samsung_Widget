@@ -1,12 +1,14 @@
 package com.traintimings.vvs
 
 import android.content.Context
+import android.os.Build
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import java.time.Duration
@@ -17,6 +19,7 @@ object Scheduler {
     private const val PERIODIC = "vvs-periodic"
     private const val NOW = "vvs-now"
     private const val NEXT = "vvs-next"
+    private const val URGENT = "vvs-urgent"
 
     /**
      * Every job must ask for network: Android (and Samsung's battery manager especially) can cut
@@ -41,6 +44,20 @@ object Scheduler {
         WorkManager.getInstance(ctx).enqueueUniqueWork(NOW, ExistingWorkPolicy.REPLACE, request)
     }
 
+    /**
+     * Urgent refresh after a background download failed. Expedited jobs are let through more of
+     * Android's background limits (Doze, app standby, battery saver) than normal ones.
+     */
+    fun refreshUrgent(ctx: Context) {
+        val builder = OneTimeWorkRequestBuilder<RefreshWorker>().setConstraints(online)
+        // Before Android 12 expedited work runs as a foreground service and needs a notification;
+        // a normal job is fine there.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            builder.setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+        }
+        WorkManager.getInstance(ctx).enqueueUniqueWork(URGENT, ExistingWorkPolicy.KEEP, builder.build())
+    }
+
     /** Wake up just after the next train leaves so the widget rolls forward instead of showing a gone train. */
     fun scheduleNext(ctx: Context, nextDeparture: Instant?) {
         if (nextDeparture == null) return
@@ -58,6 +75,7 @@ object Scheduler {
             cancelUniqueWork(PERIODIC)
             cancelUniqueWork(NOW)
             cancelUniqueWork(NEXT)
+            cancelUniqueWork(URGENT)
         }
     }
 }

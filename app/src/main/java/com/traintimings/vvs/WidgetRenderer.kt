@@ -56,6 +56,11 @@ object WidgetRenderer {
                 when {
                     loaded.isEmpty() -> ctx.getString(R.string.widget_loading)
                     anyError && fetchedAt == null -> ctx.getString(R.string.widget_error)
+                    // The cached trips ran out because updates keep failing: say so, not "no departures".
+                    anyError -> ctx.getString(
+                        R.string.widget_stale,
+                        loaded.firstNotNullOfOrNull { it.error }.orEmpty(),
+                    )
                     else -> ctx.getString(R.string.widget_no_departures)
                 },
             )
@@ -171,11 +176,15 @@ object WidgetRenderer {
         DateTimeFormatter.ofPattern(if (DateFormat.is24HourFormat(ctx)) "HH:mm" else "h:mm")
             .withZone(ZoneId.systemDefault())
 
+    /** A tap opens the see-through [RefreshActivity] so the download runs in the foreground. */
     private fun refreshIntent(ctx: Context, id: Int): PendingIntent {
-        val intent = Intent(ctx, TrainWidgetProvider::class.java)
-            .setAction(TrainWidgetProvider.ACTION_REFRESH)
-            .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id)
-        return PendingIntent.getBroadcast(
+        val intent = Intent(ctx, RefreshActivity::class.java)
+            .setData(Uri.parse("traintimings://refresh/$id"))
+            .addFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION or
+                    Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS,
+            )
+        return PendingIntent.getActivity(
             ctx, id, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
     }

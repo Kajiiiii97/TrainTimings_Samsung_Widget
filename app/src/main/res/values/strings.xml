@@ -9,6 +9,7 @@
     <string name="widget_refreshing">Refreshing…</string>
     <string name="widget_error">Couldn\'t reach VVS. Tap to retry.</string>
     <string name="widget_no_departures">No upcoming departures</string>
+    <string name="widget_stale">Couldn\'t update in the background (%1$s). Tap to refresh.\n\nIf this keeps happening: Settings → Apps → Train Timings → Battery → Unrestricted, and allow background data.</string>
     <string name="widget_updated">Updated %1$s</string>
     <string name="widget_live">● Live</string>
     <string name="widget_offline">Offline · data from %1$s</string>

@@ -29,6 +29,15 @@
             </intent-filter>
         </activity>
 
+        <!-- See-through screen a widget tap opens to refresh in the foreground -->
+        <activity
+            android:name=".RefreshActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@style/InvisibleRefresh" />
+
         <receiver
             android:name=".TrainWidgetProvider"
             android:exported="false"

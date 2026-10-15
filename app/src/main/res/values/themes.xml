@@ -17,6 +17,14 @@
         <item name="android:alertDialogTheme">@style/PlayfulDialog</item>
     </style>
 
+    <!-- Fully see-through, no animation: the home screen stays visible during a tap-refresh -->
+    <style name="InvisibleRefresh" parent="android:Theme.Translucent.NoTitleBar">
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
+
     <style name="PlayfulDialog" parent="android:Theme.Material.Light.Dialog.Alert">
         <item name="android:windowBackground">@drawable/dialog_bg</item>
         <item name="android:colorAccent">@color/petal_rouge</item>

@@ -109,7 +109,7 @@ object Refresher {
                         },
                         onFailure = { e ->
                             if (old == null && keepLoadingOnFailure) null
-                            else DepartureCache(old?.fetchedAt, old?.departures.orEmpty(), e.message ?: "Network error", old?.fullAt)
+                            else DepartureCache(old?.fetchedAt, old?.departures.orEmpty(), reason(e), old?.fullAt)
                         },
                     )
                     if (cache != null) WidgetStore.saveStopCache(ctx, job.stopId, cache)
@@ -131,6 +131,19 @@ object Refresher {
         Scheduler.scheduleNext(ctx, next)
         LiveTicker.schedule(ctx)
         failed
+    }
+
+    /** A short, readable reason for the widget instead of a raw exception message. */
+    internal fun reason(e: Throwable): String {
+        val cause = (e as? java.util.concurrent.ExecutionException)?.cause ?: e
+        return when (cause) {
+            is java.net.UnknownHostException -> "no internet"
+            is java.net.SocketTimeoutException, is java.util.concurrent.TimeoutException -> "timed out"
+            is java.net.ConnectException -> "connection refused"
+            is java.io.IOException -> cause.message?.take(40) ?: "network error"
+            is org.json.JSONException -> "unexpected reply from VVS"
+            else -> cause.javaClass.simpleName
+        }
     }
 
     private class Job(

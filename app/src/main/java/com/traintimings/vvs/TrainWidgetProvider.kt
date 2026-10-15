@@ -73,10 +73,11 @@ class TrainWidgetProvider : AppWidgetProvider() {
         val pending = goAsync()
         Thread {
             try {
-                // If the direct fetch fails, leave a job queued to retry once there's network.
-                if (Refresher.refreshAll(app, keepLoadingOnFailure = false, kind = kind)) Scheduler.refreshNow(app)
+                // If the direct fetch fails (often blocked background internet), hand over to an
+                // urgent job, which Android lets through more of its background limits.
+                if (Refresher.refreshAll(app, keepLoadingOnFailure = false, kind = kind)) Scheduler.refreshUrgent(app)
             } catch (e: Exception) {
-                Scheduler.refreshNow(app)
+                Scheduler.refreshUrgent(app)
             } finally {
                 pending.finish()
             }
