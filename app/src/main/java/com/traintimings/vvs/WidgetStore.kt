@@ -2,6 +2,7 @@ package com.traintimings.vvs
 
 import android.content.Context
 import org.json.JSONObject
+import java.time.Instant
 
 /**
  * Per-widget config and per-stop cached departures, stored as JSON in SharedPreferences.
@@ -29,6 +30,13 @@ object WidgetStore {
 
     fun remove(ctx: Context, id: Int) {
         prefs(ctx).edit().remove("cfg_$id").remove("cache_$id").apply()
+    }
+
+    fun lastRefreshAttempt(ctx: Context): Instant =
+        Instant.ofEpochMilli(prefs(ctx).getLong("last_refresh_attempt", 0L))
+
+    fun markRefreshAttempt(ctx: Context, at: Instant) {
+        prefs(ctx).edit().putLong("last_refresh_attempt", at.toEpochMilli()).apply()
     }
 
     /** Drops cached stops no widget uses any more. */
